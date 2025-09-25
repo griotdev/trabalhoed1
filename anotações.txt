@@ -1,0 +1,2 @@
+texto e linha só possuem uma cor, quando for necessário trocar a cor de uma forma 
+pela cor de um texto ou uma linha, usar a complementar 255 - cor.

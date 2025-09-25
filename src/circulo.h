@@ -16,6 +16,8 @@ typedef void* Circulo;
 
 Circulo criaCirculo(int id, float x, float y, float r, char* cb, char* cp);
 
+float CalculaCirculoArea();
+
 int getCirculoId();
 float getCirculoX();
 float getCirculoY();
