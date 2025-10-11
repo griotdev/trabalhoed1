@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PI 3.14159265358979323846
+#define VPI 3.14159265358979323846
 
 typedef struct circulo_t{
     int id;
@@ -33,9 +33,9 @@ circulo* criaCirculo(int id, float x, float y, float r, char* cb, char* cp)
     return c;
 }
 
-float CalculaCirculoArea()
+float CalculaCirculoArea(circulo *c)
 {
-
+    return c->raio * c->raio * VPI;
 }
 
 int getCirculoId(circulo *c)
