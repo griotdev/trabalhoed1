@@ -3,7 +3,6 @@
 #include <string.h>
 #include "argumentos.h"
 
-/* Estrutura concreta (NÃO colocar no .h) */
 typedef struct
 {
     char *entrada_path; /* -e */
@@ -42,7 +41,7 @@ Args argumentos_cria(int argc, char **argv)
         }
         else
         {
-            /* argumento não tratado: poderia juntar em msg */
+            
         }
     }
     return (Args)a;
