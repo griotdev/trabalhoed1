@@ -1,0 +1,1 @@
+// tipo generico de formas, para carregadores e disparadores futuros, fila/pilha.

@@ -1,0 +1,1 @@
+// será responsável por fazer o .svg final, utilizando as respectivas funções de escrever svg em cada uma das formas

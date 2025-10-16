@@ -1,1 +1,0 @@
-// lida com os arquivos .geo e .qry

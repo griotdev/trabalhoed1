@@ -1,89 +1,128 @@
-#include "pilha.h"
+﻿/* src/pilha.c
+ *
+ * Implementação do TAD Pilha genérica usando lista encadeada.
+ */
 
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "../../estruturas/pilha/pilha.h"
 
-typedef struct {
-	char **dados;      // vetor de strings
-	size_t topo;       // quantidade de elementos
-	size_t capacidade; // capacidade alocada
-} PilhaImpl;
+/* Nó da pilha (implementação interna, não visível no .h) */
+typedef struct noPilha {
+    void *dado;
+    struct noPilha *prox;
+} NoPilha;
 
-static char* dup_str(const char* s){
-	if(!s) return NULL;
-	size_t n = strlen(s) + 1;
-	char* cpy = (char*)malloc(n);
-	if(cpy) memcpy(cpy, s, n);
-	return cpy;
+/* Estrutura da pilha */
+struct pilha {
+    NoPilha *topo;
+    int tamanho;
+};
+
+/**
+ * Cria uma nova pilha vazia.
+ */
+Pilha* criaPilha(void) {
+    Pilha *pilha = (Pilha*)malloc(sizeof(Pilha));
+    if (pilha == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para a pilha.\n");
+        return NULL;
+    }
+    
+    pilha->topo = NULL;
+    pilha->tamanho = 0;
+    
+    return pilha;
 }
 
-static void garantir_capacidade(PilhaImpl* pi, size_t nova_qtd){
-	if(nova_qtd <= pi->capacidade) return;
-	size_t nova_cap = pi->capacidade ? pi->capacidade * 2 : 8;
-	while(nova_cap < nova_qtd) nova_cap *= 2;
-	char** novo = (char**)realloc(pi->dados, nova_cap * sizeof(char*));
-	if(!novo) return;
-	pi->dados = novo;
-	pi->capacidade = nova_cap;
+/**
+ * Empilha um elemento no topo da pilha.
+ */
+int empilha(Pilha *pilha, void *dado) {
+    if (pilha == NULL) {
+        return 0;
+    }
+    
+    NoPilha *novo = (NoPilha*)malloc(sizeof(NoPilha));
+    if (novo == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para nó da pilha.\n");
+        return 0;
+    }
+    
+    novo->dado = dado;
+    novo->prox = pilha->topo;
+    pilha->topo = novo;
+    pilha->tamanho++;
+    
+    return 1;
 }
 
-Pilha criaPilha(void){
-	PilhaImpl* pi = (PilhaImpl*)calloc(1, sizeof(PilhaImpl));
-	return (Pilha)pi;
+/**
+ * Desempilha um elemento do topo da pilha.
+ */
+void* desempilha(Pilha *pilha) {
+    if (pilha == NULL || pilha->topo == NULL) {
+        return NULL;
+    }
+    
+    NoPilha *temp = pilha->topo;
+    void *dado = temp->dado;
+    
+    pilha->topo = temp->prox;
+    free(temp);
+    pilha->tamanho--;
+    
+    return dado;
 }
 
-void liberaPilha(Pilha p){
-	if(!p) return;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	for(size_t i=0;i<pi->topo;i++){
-		free(pi->dados[i]);
-	}
-	free(pi->dados);
-	free(pi);
+/**
+ * Consulta o elemento no topo da pilha sem removê-lo.
+ */
+void* consultaPilha(Pilha *pilha) {
+    if (pilha == NULL || pilha->topo == NULL) {
+        return NULL;
+    }
+    return pilha->topo->dado;
 }
 
-void limpaPilha(Pilha p){
-	if(!p) return;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	for(size_t i=0;i<pi->topo;i++){
-		free(pi->dados[i]);
-		pi->dados[i] = NULL;
-	}
-	pi->topo = 0;
+/**
+ * Verifica se a pilha está vazia.
+ */
+int pilhaVazia(Pilha *pilha) {
+    if (pilha == NULL) {
+        return 1;
+    }
+    return (pilha->topo == NULL);
 }
 
-int pilhaVazia(Pilha p){
-	if(!p) return 1;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	return pi->topo == 0;
+/**
+ * Retorna o tamanho atual da pilha.
+ */
+int tamanhoPilha(Pilha *pilha) {
+    if (pilha == NULL) {
+        return 0;
+    }
+    return pilha->tamanho;
 }
 
-size_t tamanhoPilha(Pilha p){
-	if(!p) return 0;
-	return ((PilhaImpl*)p)->topo;
+/**
+ * Destrói a pilha, liberando toda a memória alocada.
+ */
+void destroiPilha(Pilha *pilha, FuncaoLiberaPilha libera) {
+    if (pilha == NULL) {
+        return;
+    }
+    
+    NoPilha *atual = pilha->topo;
+    while (atual != NULL) {
+        NoPilha *temp = atual;
+        atual = atual->prox;
+        
+        if (libera != NULL && temp->dado != NULL) {
+            libera(temp->dado);
+        }
+        free(temp);
+    }
+    
+    free(pilha);
 }
-
-void empilha(Pilha p, const char* instrucao){
-	if(!p) return;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	garantir_capacidade(pi, pi->topo + 1);
-	if(pi->capacidade < pi->topo + 1) return;
-	pi->dados[pi->topo++] = dup_str(instrucao);
-}
-
-char* desempilha(Pilha p){
-	if(!p) return NULL;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	if(pi->topo == 0) return NULL;
-	char* s = pi->dados[--pi->topo];
-	pi->dados[pi->topo] = NULL;
-	return s;
-}
-
-const char* topoPilha(Pilha p){
-	if(!p) return NULL;
-	PilhaImpl* pi = (PilhaImpl*)p;
-	if(pi->topo == 0) return NULL;
-	return pi->dados[pi->topo - 1];
-}
-

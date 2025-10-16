@@ -1,46 +1,70 @@
+/* include/pilha.h
+ *
+ * TAD Pilha genérica implementada com ponteiros void.
+ * Segue o padrão LIFO (Last In, First Out).
+ * 
+ * Observações:
+ *  - A pilha armazena ponteiros void* para permitir tipos genéricos.
+ *  - O usuário é responsável pela alocação/liberação dos dados.
+ *  - Funções de callback podem ser fornecidas para liberar memória.
+ */
+
 #ifndef PILHA_H
 #define PILHA_H
 
-#include <stddef.h>
+/* Tipo opaco para a Pilha */
+typedef struct pilha Pilha;
 
-// Tipo opaco da Pilha
-typedef void* Pilha;
+/* Tipo de função callback para liberar elementos */
+typedef void (*FuncaoLiberaPilha)(void*);
 
 /**
- * Estrutura de dados: Pilha (LIFO)
- * Armazena linhas de instruções (strings) dos arquivos .geo/.qry.
- *
- * Contrato de memória para strings:
- * - As funções de inserção copiam internamente a string recebida
- *   (strdup/clone). O chamador pode liberar a string original se desejar.
- * - As funções de remoção (desempilha) retornam o ponteiro da string
- *   armazenada; a posse é transferida para o chamador, que deve chamar free().
+ * Cria uma nova pilha vazia.
+ * @return Ponteiro para a pilha criada, ou NULL em caso de erro.
  */
+Pilha* criaPilha(void);
 
-// Cria uma pilha vazia
-Pilha criaPilha(void);
+/**
+ * Empilha um elemento no topo da pilha.
+ * @param pilha Ponteiro para a pilha.
+ * @param dado Ponteiro para o dado a ser empilhado.
+ * @return 1 em caso de sucesso, 0 em caso de erro.
+ */
+int empilha(Pilha *pilha, void *dado);
 
-// Libera toda a memória da pilha (inclusive strings remanescentes)
-void liberaPilha(Pilha p);
+/**
+ * Desempilha um elemento do topo da pilha.
+ * @param pilha Ponteiro para a pilha.
+ * @return Ponteiro para o dado desempilhado, ou NULL se a pilha estiver vazia.
+ */
+void* desempilha(Pilha *pilha);
 
-// Remove todos os elementos da pilha, mantendo a pilha válida
-void limpaPilha(Pilha p);
+/**
+ * Consulta o elemento no topo da pilha sem removê-lo.
+ * @param pilha Ponteiro para a pilha.
+ * @return Ponteiro para o dado no topo, ou NULL se a pilha estiver vazia.
+ */
+void* consultaPilha(Pilha *pilha);
 
-// Retorna 1 se vazia, 0 caso contrário
-int pilhaVazia(Pilha p);
+/**
+ * Verifica se a pilha está vazia.
+ * @param pilha Ponteiro para a pilha.
+ * @return 1 se vazia, 0 caso contrário.
+ */
+int pilhaVazia(Pilha *pilha);
 
-// Retorna a quantidade de elementos na pilha
-size_t tamanhoPilha(Pilha p);
+/**
+ * Retorna o tamanho atual da pilha.
+ * @param pilha Ponteiro para a pilha.
+ * @return Número de elementos na pilha.
+ */
+int tamanhoPilha(Pilha *pilha);
 
-// Empilha uma linha de instrução (é feita cópia da string)
-void empilha(Pilha p, const char* instrucao);
+/**
+ * Destrói a pilha, liberando toda a memória alocada.
+ * @param pilha Ponteiro para a pilha.
+ * @param libera Função callback para liberar cada elemento (pode ser NULL).
+ */
+void destroiPilha(Pilha *pilha, FuncaoLiberaPilha libera);
 
-// Desempilha e retorna a string do topo (posse transferida ao chamador)
-// Retorna NULL se vazia
-char* desempilha(Pilha p);
-
-// Retorna a string do topo (somente leitura, ainda pertencente à pilha)
-// Retorna NULL se vazia
-const char* topoPilha(Pilha p);
-
-#endif // PILHA_H
+#endif /* PILHA_H */
