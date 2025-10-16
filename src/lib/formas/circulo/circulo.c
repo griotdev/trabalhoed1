@@ -1,70 +1,145 @@
-#include "circulo.h"
+﻿/* src/circulo.c
+ *
+ * Implementação do TAD Círculo.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include "../../formas/circulo/circulo.h"
 
-#define VPI 3.14159265358979323846
-
-typedef struct circulo_t{
+/* Estrutura interna do círculo */
+typedef struct circulo_internal {
     int id;
-    float x, y;
-    float raio;
-    char cb[8];
-    char cp[8];
-}circulo;
+    double x;
+    double y;
+    double raio;
+    char corBorda[20];
+    char corPreenchimento[20];
+} CirculoInternal;
 
-circulo* criaCirculo(int id, float x, float y, float r, char* cb, char* cp)
-{
-    circulo *c = (circulo*) malloc(sizeof(circulo));
-    
+/**
+ * Cria um círculo.
+ */
+Circulo criaCirculo(int id, double x, double y, double raio, 
+                    const char *corBorda, const char *corPreenchimento) {
+    CirculoInternal *c = (CirculoInternal*)malloc(sizeof(CirculoInternal));
     if (c == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para círculo.\n");
         return NULL;
     }
     
     c->id = id;
     c->x = x;
     c->y = y;
-    c->raio = r;
-    strncpy(c->cb, cb, sizeof(c->cb) - 1);
-    c->cb[sizeof(c->cb) - 1] = '\0';
-    strncpy(c->cp, cp, sizeof(c->cp) - 1);
-    c->cp[sizeof(c->cp) - 1] = '\0';
-    return c;
+    c->raio = raio;
+    strncpy(c->corBorda, corBorda, 19);
+    c->corBorda[19] = '\0';
+    strncpy(c->corPreenchimento, corPreenchimento, 19);
+    c->corPreenchimento[19] = '\0';
+    
+    return (Circulo)c;
 }
 
-float CalculaCirculoArea(circulo *c)
-{
-    return c->raio * c->raio * VPI;
+/**
+ * Cria uma cópia de um círculo.
+ */
+Circulo clonaCirculo(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    if (c == NULL) {
+        return NULL;
+    }
+    return criaCirculo(c->id, c->x, c->y, c->raio,
+                       c->corBorda, c->corPreenchimento);
 }
 
-int getCirculoId(circulo *c)
-{
-    return c->id;
+/**
+ * Libera memória de um círculo.
+ */
+void destroiCirculo(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    if (c != NULL) {
+        free(c);
+    }
 }
 
-float getCirculoX(circulo *c)
-{
-    return c->x;
+/**
+ * Getters
+ */
+int getCirculoId(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->id : -1;
 }
 
-float getCirculoY(circulo *c)
-{
-    return c->y;
+double getCirculoX(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->x : 0.0;
 }
 
-float getCirculoRaio(circulo *c)
-{
-    return c->raio;
+double getCirculoY(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->y : 0.0;
 }
 
-char* getCirculoCb(circulo *c)
-{
-    return c->cb;
+double getCirculoRaio(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->raio : 0.0;
 }
 
-char* getCirculoCp(circulo *c)
-{
-    return c->cp;
+const char* getCirculoCorBorda(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->corBorda : "";
 }
 
+const char* getCirculoCorPreenchimento(Circulo circulo) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    return c ? c->corPreenchimento : "";
+}
+
+/**
+ * Setters
+ */
+void setCirculoPosicao(Circulo circulo, double x, double y) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    if (c != NULL) {
+        c->x = x;
+        c->y = y;
+    }
+}
+
+/**
+ * Define as cores do círculo.
+ */
+void setCirculoCores(Circulo circulo, const char *corBorda, const char *corPreenchimento) {
+    CirculoInternal *c = (CirculoInternal*)circulo;
+    if (c == NULL) return;
+    
+    if (corBorda != NULL) {
+        strncpy(c->corBorda, corBorda, 19);
+        c->corBorda[19] = '\0';
+    }
+    
+    if (corPreenchimento != NULL) {
+        strncpy(c->corPreenchimento, corPreenchimento, 19);
+        c->corPreenchimento[19] = '\0';
+    }
+}
+
+/**
+ * Verifica se dois círculos se sobrepõem.
+ */
+int circulosSobrepoe(Circulo circulo1, Circulo circulo2) {
+    CirculoInternal *c1 = (CirculoInternal*)circulo1;
+    CirculoInternal *c2 = (CirculoInternal*)circulo2;
+    if (c1 == NULL || c2 == NULL) {
+        return 0;
+    }
+    
+    double dx = c1->x - c2->x;
+    double dy = c1->y - c2->y;
+    double distancia = sqrt(dx * dx + dy * dy);
+    double somaRaios = c1->raio + c2->raio;
+    
+    return distancia < somaRaios;
+}
