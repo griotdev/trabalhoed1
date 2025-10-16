@@ -1,20 +1,30 @@
+﻿/* src/fila.c
+ *
+ * Implementação do TAD Fila genérica usando lista encadeada.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../estruturas/fila/fila.h"
 
+/* Nó da fila (implementação interna, não visível no .h) */
 typedef struct no {
     void *dado;
     struct no *prox;
 } No;
 
-struct fila {
+/* Estrutura da fila */
+typedef struct fila_internal {
     No *inicio;
     No *fim;
     int tamanho;
-};
+} FilaInternal;
 
-Fila* criaFila(void) {
-    Fila *fila = (Fila*)malloc(sizeof(Fila));
+/**
+ * Cria uma nova fila vazia.
+ */
+Fila criaFila(void) {
+    FilaInternal *fila = (FilaInternal*)malloc(sizeof(FilaInternal));
     if (fila == NULL) {
         fprintf(stderr, "Erro ao alocar memória para a fila.\n");
         return NULL;
@@ -24,11 +34,15 @@ Fila* criaFila(void) {
     fila->fim = NULL;
     fila->tamanho = 0;
     
-    return fila;
+    return (Fila)fila;
 }
 
-int enfileira(Fila *fila, void *dado) {
-    if (fila == NULL) {
+/**
+ * Enfileira um elemento no final da fila.
+ */
+int enfileira(Fila fila, void *dado) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL) {
         return 0;
     }
     
@@ -41,65 +55,85 @@ int enfileira(Fila *fila, void *dado) {
     novo->dado = dado;
     novo->prox = NULL;
     
-    if (fila->fim != NULL) {
-        fila->fim->prox = novo;
+    if (f->fim != NULL) {
+        f->fim->prox = novo;
     }
-    fila->fim = novo;
+    f->fim = novo;
     
-    if (fila->inicio == NULL) {
-        fila->inicio = novo;
+    if (f->inicio == NULL) {
+        f->inicio = novo;
     }
     
-    fila->tamanho++;
+    f->tamanho++;
     return 1;
 }
 
-void* desenfileira(Fila *fila) {
-    if (fila == NULL || fila->inicio == NULL) {
+/**
+ * Desenfileira um elemento do início da fila.
+ */
+void* desenfileira(Fila fila) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL || f->inicio == NULL) {
         return NULL;
     }
     
-    No *temp = fila->inicio;
+    No *temp = f->inicio;
     void *dado = temp->dado;
     
-    fila->inicio = temp->prox;
-    if (fila->inicio == NULL) {
-        fila->fim = NULL;
+    f->inicio = temp->prox;
+    if (f->inicio == NULL) {
+        f->fim = NULL;
     }
     
     free(temp);
-    fila->tamanho--;
+    f->tamanho--;
     
     return dado;
 }
 
-void* consultaFila(Fila *fila) {
-    if (fila == NULL || fila->inicio == NULL) {
+/**
+ * Consulta o elemento no início da fila sem removê-lo.
+ */
+void* consultaFila(Fila fila) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL || f->inicio == NULL) {
         return NULL;
     }
-    return fila->inicio->dado;
+    return f->inicio->dado;
 }
 
-int filaVazia(Fila *fila) {
-    if (fila == NULL) {
+/**
+ * Verifica se a fila está vazia.
+ */
+int filaVazia(Fila fila) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL) {
         return 1;
     }
-    return (fila->inicio == NULL);
+    return (f->inicio == NULL);
 }
 
-int tamanhoFila(Fila *fila) {
-    if (fila == NULL) {
+/**
+ * Retorna o tamanho atual da fila.
+ */
+int tamanhoFila(Fila fila) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL) {
         return 0;
     }
-    return fila->tamanho;
+    return f->tamanho;
 }
 
-void destroiFila(Fila *fila, FuncaoLibera libera) {
-    if (fila == NULL) {
+/**
+ * Destrói a fila, liberando toda a memória alocada.
+ */
+void destroiFila(Fila fila, FuncaoLibera libera) {
+    FilaInternal *f = (FilaInternal*)fila;
+    if (f == NULL) {
         return;
     }
     
-    No *atual = fila->inicio;
+    No *atual = f->inicio;
     while (atual != NULL) {
         No *temp = atual;
         atual = atual->prox;
@@ -110,5 +144,5 @@ void destroiFila(Fila *fila, FuncaoLibera libera) {
         free(temp);
     }
     
-    free(fila);
+    free(f);
 }

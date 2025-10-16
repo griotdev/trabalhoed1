@@ -14,16 +14,16 @@ typedef struct noPilha {
 } NoPilha;
 
 /* Estrutura da pilha */
-struct pilha {
+typedef struct pilha_internal {
     NoPilha *topo;
     int tamanho;
-};
+} PilhaInternal;
 
 /**
  * Cria uma nova pilha vazia.
  */
-Pilha* criaPilha(void) {
-    Pilha *pilha = (Pilha*)malloc(sizeof(Pilha));
+Pilha criaPilha(void) {
+    PilhaInternal *pilha = (PilhaInternal*)malloc(sizeof(PilhaInternal));
     if (pilha == NULL) {
         fprintf(stderr, "Erro ao alocar memória para a pilha.\n");
         return NULL;
@@ -32,14 +32,15 @@ Pilha* criaPilha(void) {
     pilha->topo = NULL;
     pilha->tamanho = 0;
     
-    return pilha;
+    return (Pilha)pilha;
 }
 
 /**
  * Empilha um elemento no topo da pilha.
  */
-int empilha(Pilha *pilha, void *dado) {
-    if (pilha == NULL) {
+int empilha(Pilha pilha, void *dado) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL) {
         return 0;
     }
     
@@ -50,9 +51,9 @@ int empilha(Pilha *pilha, void *dado) {
     }
     
     novo->dado = dado;
-    novo->prox = pilha->topo;
-    pilha->topo = novo;
-    pilha->tamanho++;
+    novo->prox = p->topo;
+    p->topo = novo;
+    p->tamanho++;
     
     return 1;
 }
@@ -60,17 +61,18 @@ int empilha(Pilha *pilha, void *dado) {
 /**
  * Desempilha um elemento do topo da pilha.
  */
-void* desempilha(Pilha *pilha) {
-    if (pilha == NULL || pilha->topo == NULL) {
+void* desempilha(Pilha pilha) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL || p->topo == NULL) {
         return NULL;
     }
     
-    NoPilha *temp = pilha->topo;
+    NoPilha *temp = p->topo;
     void *dado = temp->dado;
     
-    pilha->topo = temp->prox;
+    p->topo = temp->prox;
     free(temp);
-    pilha->tamanho--;
+    p->tamanho--;
     
     return dado;
 }
@@ -78,42 +80,46 @@ void* desempilha(Pilha *pilha) {
 /**
  * Consulta o elemento no topo da pilha sem removê-lo.
  */
-void* consultaPilha(Pilha *pilha) {
-    if (pilha == NULL || pilha->topo == NULL) {
+void* consultaPilha(Pilha pilha) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL || p->topo == NULL) {
         return NULL;
     }
-    return pilha->topo->dado;
+    return p->topo->dado;
 }
 
 /**
  * Verifica se a pilha está vazia.
  */
-int pilhaVazia(Pilha *pilha) {
-    if (pilha == NULL) {
+int pilhaVazia(Pilha pilha) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL) {
         return 1;
     }
-    return (pilha->topo == NULL);
+    return (p->topo == NULL);
 }
 
 /**
  * Retorna o tamanho atual da pilha.
  */
-int tamanhoPilha(Pilha *pilha) {
-    if (pilha == NULL) {
+int tamanhoPilha(Pilha pilha) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL) {
         return 0;
     }
-    return pilha->tamanho;
+    return p->tamanho;
 }
 
 /**
  * Destrói a pilha, liberando toda a memória alocada.
  */
-void destroiPilha(Pilha *pilha, FuncaoLiberaPilha libera) {
-    if (pilha == NULL) {
+void destroiPilha(Pilha pilha, FuncaoLiberaPilha libera) {
+    PilhaInternal *p = (PilhaInternal*)pilha;
+    if (p == NULL) {
         return;
     }
     
-    NoPilha *atual = pilha->topo;
+    NoPilha *atual = p->topo;
     while (atual != NULL) {
         NoPilha *temp = atual;
         atual = atual->prox;
@@ -124,5 +130,5 @@ void destroiPilha(Pilha *pilha, FuncaoLiberaPilha libera) {
         free(temp);
     }
     
-    free(pilha);
+    free(p);
 }
