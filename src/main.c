@@ -2,14 +2,54 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "argumentos/argumentHandler.h"
-#include "geo/geoHandler/geoHandler.h"
-#include "estruturas/fila/fila.h"
-#include "estruturas/pilha/pilha.h"
-#include "geo/svg/svg.h"
-#include "formas/formas/formas.h"
+#include "lib/argumentos/argumentHandler.h"
+#include "lib/geo/parserGeo/parserGeo.h"
+#include "lib/estruturas/fila/fila.h"
+#include "lib/estruturas/pilha/pilha.h"
+#include "lib/geo/svg/svg.h"
+#include "lib/formas/formas/formas.h"
 
 #define MAX_ALLOWED_ARGS 12
+
+void extrairNomeBase(const char *caminho, char *nomeBase, size_t tamanho) {
+    if (caminho == NULL || nomeBase == NULL || tamanho == 0) {
+        return;
+    }
+    
+    const char *ultimaBarra = strrchr(caminho, '/');
+    const char *nomeArquivo = (ultimaBarra != NULL) ? ultimaBarra + 1 : caminho;
+    
+    const char *ponto = strrchr(nomeArquivo, '.');
+    
+    if (ponto != NULL) {
+        size_t comprimento = ponto - nomeArquivo;
+        if (comprimento >= tamanho) {
+            comprimento = tamanho - 1;
+        }
+        strncpy(nomeBase, nomeArquivo, comprimento);
+        nomeBase[comprimento] = '\0';
+    } else {
+        strncpy(nomeBase, nomeArquivo, tamanho - 1);
+        nomeBase[tamanho - 1] = '\0';
+    }
+}
+
+char* construirCaminhoSaida(const char *diretorio, const char *nomeBase, const char *extensao) {
+    if (diretorio == NULL || nomeBase == NULL || extensao == NULL) {
+        return NULL;
+    }
+    
+    size_t tamTotal = strlen(diretorio) + strlen(nomeBase) + strlen(extensao) + 2;
+    char *caminho = (char*)malloc(tamTotal);
+    
+    if (caminho == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para caminho de saída.\n");
+        return NULL;
+    }
+    
+    snprintf(caminho, tamTotal, "%s/%s%s", diretorio, nomeBase, extensao);
+    return caminho;
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 5) {
@@ -53,7 +93,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\n=== Processando arquivo .geo ===\n");
-    int geoStatus = parseGeo(&args, filaFormas, pilhaAux);
+    int geoStatus = parseGeo(args, filaFormas, pilhaAux);
     if (geoStatus != 0) {
         fprintf(stderr, "Erro durante parseGeo (código %d).\n", geoStatus);
         destroiPilha(pilhaAux, NULL);
@@ -71,7 +111,7 @@ int main(int argc, char *argv[]) {
         svgGeraArquivo(caminhoSvg, filaFormas, 800, 600);
         free(caminhoSvg);
     }
-    
+
     destroiPilha(pilhaAux, NULL);
     destroiFila(filaFormas, (FuncaoLibera)destroiForma);
     freeArgs(&args);

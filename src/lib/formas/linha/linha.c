@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../formas/linha/linha.h"
+#include "linha.h"
 
 /* Estrutura interna da linha */
 typedef struct linha_internal {

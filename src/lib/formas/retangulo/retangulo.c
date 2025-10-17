@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../formas/retangulo/retangulo.h"
+#include "retangulo.h"
 
 /* Estrutura interna do retângulo */
 typedef struct retangulo_internal {

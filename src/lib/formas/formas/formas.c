@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../formas/formas/formas.h"
+#include "formas.h"
 
 struct forma {
     TipoForma tipo;

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../geo/parserGeo/parserGeo.h"
+#include "parserGeo.h"
 #include "../../formas/formas/formas.h"
 #include "../../estruturas/fila/fila.h"
 

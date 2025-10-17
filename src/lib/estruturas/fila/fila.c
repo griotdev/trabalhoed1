@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../estruturas/fila/fila.h"
+#include "fila.h"
 
 /* Nó da fila (implementação interna, não visível no .h) */
 typedef struct no {

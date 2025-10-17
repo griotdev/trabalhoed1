@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../../formas/circulo/circulo.h"
+#include "circulo.h"
 
 /* Estrutura interna do círculo */
 typedef struct circulo_internal {

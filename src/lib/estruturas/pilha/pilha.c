@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../estruturas/pilha/pilha.h"
+#include "pilha.h"
 
 /* Nó da pilha (implementação interna, não visível no .h) */
 typedef struct noPilha {

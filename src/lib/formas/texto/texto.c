@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../formas/texto/texto.h"
+#include "texto.h"
 
 /* Estrutura interna do texto */
 typedef struct texto_internal {

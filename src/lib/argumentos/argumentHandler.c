@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../argumentos/argumentHandler.h"
+#include "argumentHandler.h"
 
 typedef struct ArgsStruct {
     char *entryDir;
