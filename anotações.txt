@@ -1,2 +1,6 @@
 texto e linha só possuem uma cor, quando for necessário trocar a cor de uma forma 
 pela cor de um texto ou uma linha, usar a complementar 255 - cor.
+
+talvez seja necessário separar texto (t) de texto estilizado (ts) por prezar pela modularidade talvez 
+
+todo trabalho até aqui é possível separar de qry, será necessário reestruturar todo trabalho dependendo da implementação

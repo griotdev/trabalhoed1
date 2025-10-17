@@ -1,1 +1,0 @@
-// lidará com os arquivos .geo
