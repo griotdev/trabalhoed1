@@ -4,6 +4,7 @@
 
 #include "lib/argumentos/argumentHandler.h"
 #include "lib/geo/parserGeo/parserGeo.h"
+#include "lib/qry/parserQry/parserQry.h"
 #include "lib/estruturas/fila/fila.h"
 #include "lib/estruturas/pilha/pilha.h"
 #include "lib/geo/svg/svg.h"
@@ -110,6 +111,11 @@ int main(int argc, char *argv[]) {
         printf("\n=== Gerando arquivo SVG ===\n");
         svgGeraArquivo(caminhoSvg, filaFormas, 800, 600);
         free(caminhoSvg);
+    }
+
+    int qryStatus = parseQry(args, filaFormas, caminhoSvg);
+    if (qryStatus != 0) {
+        fprintf(stderr, "Aviso: erro durante parseQry (código %d).\n", qryStatus);
     }
 
     destroiPilha(pilhaAux, NULL);

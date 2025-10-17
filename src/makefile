@@ -11,6 +11,7 @@ OBJ_DIR = obj
 FORMAS_DIR = $(LIB_DIR)/formas
 ESTRUTURAS_DIR = $(LIB_DIR)/estruturas
 GEO_DIR = $(LIB_DIR)/geo
+QRY_DIR = $(LIB_DIR)/qry
 ARGUMENTOS_DIR = $(LIB_DIR)/argumentos
 
 MAIN_SRC = main.c
@@ -27,14 +28,17 @@ ESTRUTURAS_SRC = $(ESTRUTURAS_DIR)/fila/fila.c \
 GEO_SRC = $(GEO_DIR)/parserGeo/parserGeo.c \
           $(GEO_DIR)/svg/svg.c
 
+QRY_SRC = $(QRY_DIR)/parserQry/parserQry.c
+
 ARGUMENTOS_SRC = $(ARGUMENTOS_DIR)/argumentHandler.c
 
-SOURCES = $(MAIN_SRC) $(FORMAS_SRC) $(ESTRUTURAS_SRC) $(GEO_SRC) $(ARGUMENTOS_SRC)
+SOURCES = $(MAIN_SRC) $(FORMAS_SRC) $(ESTRUTURAS_SRC) $(GEO_SRC) $(QRY_SRC) $(ARGUMENTOS_SRC)
 
 OBJECTS = $(OBJ_DIR)/main.o \
           $(OBJ_DIR)/circulo.o $(OBJ_DIR)/retangulo.o $(OBJ_DIR)/linha.o $(OBJ_DIR)/texto.o $(OBJ_DIR)/formas.o \
           $(OBJ_DIR)/fila.o $(OBJ_DIR)/pilha.o \
           $(OBJ_DIR)/parserGeo.o $(OBJ_DIR)/svg.o \
+          $(OBJ_DIR)/parserQry.o \
           $(OBJ_DIR)/argumentHandler.o
 
 all: $(OBJ_DIR) $(PROJ_NAME)
@@ -75,6 +79,9 @@ $(OBJ_DIR)/parserGeo.o: $(GEO_DIR)/parserGeo/parserGeo.c $(GEO_DIR)/parserGeo/pa
 
 $(OBJ_DIR)/svg.o: $(GEO_DIR)/svg/svg.c $(GEO_DIR)/svg/svg.h
 	$(CC) $(CFLAGS) -c $(GEO_DIR)/svg/svg.c -o $(OBJ_DIR)/svg.o
+
+$(OBJ_DIR)/parserQry.o: $(QRY_DIR)/parserQry/parserQry.c $(QRY_DIR)/parserQry/parserQry.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/parserQry/parserQry.c -o $(OBJ_DIR)/parserQry.o
 
 $(OBJ_DIR)/argumentHandler.o: $(ARGUMENTOS_DIR)/argumentHandler.c $(ARGUMENTOS_DIR)/argumentHandler.h
 	$(CC) $(CFLAGS) -c $(ARGUMENTOS_DIR)/argumentHandler.c -o $(OBJ_DIR)/argumentHandler.o
