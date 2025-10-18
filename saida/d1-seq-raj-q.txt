@@ -1,0 +1,36 @@
+# Resultado da execução do arquivo .qry
+
+[*] pd 5 1.0 1.0
+    Disparador 5 posicionado em (1.0, 1.0)
+[*] lc 3 20
+    Forma 5 (retângulo) em (23.8, 10.1) 67.2x53.4 carregada
+    Forma 6 (retângulo) em (320.7, 37.9) 64.4x51.8 carregada
+    Forma 7 (retângulo) em (460.8, 425.9) 61.6x50.2 carregada
+    Forma 8 (retângulo) em (359.1, 424.4) 58.8x48.6 carregada
+    Forma 9 (retângulo) em (500.7, 239.4) 56.0x47.0 carregada
+    Forma 10 (retângulo) em (92.1, 295.7) 53.2x45.4 carregada
+    Forma 11 (retângulo) em (202.3, 63.6) 50.4x43.8 carregada
+    Forma 12 (retângulo) em (383.5, 16.7) 47.6x42.2 carregada
+    Forma 13 (retângulo) em (456.6, 445.8) 44.8x40.6 carregada
+    Forma 14 (retângulo) em (319.9, 168.7) 42.0x39.0 carregada
+    Forma 15 (retângulo) em (379.6, 281.8) 39.2x37.4 carregada
+    Forma 16 (retângulo) em (473.4, 158.0) 36.4x35.8 carregada
+    Forma 17 (retângulo) em (158.0, 172.0) 33.6x34.2 carregada
+    Forma 18 (retângulo) em (396.6, 55.5) 30.8x32.6 carregada
+    Forma 19 (retângulo) em (462.6, 117.6) 28.0x31.0 carregada
+    Forma 20 (retângulo) em (287.5, 129.6) 25.2x29.4 carregada
+    Forma 21 (retângulo) em (320.6, 248.6) 22.4x27.8 carregada
+    Forma 22 (retângulo) em (314.1, 446.9) 19.6x26.2 carregada
+    Forma 23 (retângulo) em (348.9, 448.4) 16.8x24.6 carregada
+    Forma 24 (retângulo) em (151.1, 136.1) 14.0x23.0 carregada
+    20 formas carregadas com sucesso no carregador 3
+[*] atch 5 3 6
+    AVISO: Carregador direito 6 não existe (criando vazio)
+    Carregadores 3 e 6 encaixados no disparador 5
+[*] rjd 5 d 35.0 16.5 14.0 11.0
+    Rajada interrompida após 0 disparos: sem mais formas
+    Rajada de 0 disparos executada
+[*] calc
+    Arena vazia - sem colisões
+
+# Execução concluída

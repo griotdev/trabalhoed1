@@ -104,7 +104,7 @@ void svgFechaArquivo(FILE *arquivo) {
     fclose(arquivo);
 }
 
-int svgGeraArquivo(const char *nomeArquivo, Fila *fila, int largura, int altura) {
+int svgGeraArquivo(const char *nomeArquivo, Fila fila, int largura, int altura) {
     if (nomeArquivo == NULL || fila == NULL) {
         fprintf(stderr, "Erro: parâmetros inválidos para svgGeraArquivo.\n");
         return 1;
@@ -115,7 +115,8 @@ int svgGeraArquivo(const char *nomeArquivo, Fila *fila, int largura, int altura)
         return 1;
     }
     
-    Fila *filaTemp = criaFila();
+    // Use a proper Fila (void*) for the temporary queue to avoid type mismatches
+    Fila filaTemp = criaFila();
     if (filaTemp == NULL) {
         svgFechaArquivo(arquivo);
         return 1;

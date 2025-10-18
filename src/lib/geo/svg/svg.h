@@ -69,6 +69,6 @@ void svgFechaArquivo(FILE *arquivo);
  * @param altura Altura do canvas SVG
  * @return 0 em caso de sucesso, código de erro caso contrário
  */
-int svgGeraArquivo(const char *nomeArquivo, Fila *fila, int largura, int altura);
+int svgGeraArquivo(const char *nomeArquivo, Fila fila, int largura, int altura);
 
 #endif /* SVG_H */

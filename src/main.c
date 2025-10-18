@@ -5,6 +5,8 @@
 #include "lib/argumentos/argumentHandler.h"
 #include "lib/geo/parserGeo/parserGeo.h"
 #include "lib/qry/parserQry/parserQry.h"
+#include "lib/qry/gameState/gameState.h"
+#include "lib/qry/svgQry/svgQry.h"
 #include "lib/estruturas/fila/fila.h"
 #include "lib/estruturas/pilha/pilha.h"
 #include "lib/geo/svg/svg.h"
@@ -78,14 +80,14 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    Fila *filaFormas = criaFila();
+    Fila filaFormas = criaFila();
     if (filaFormas == NULL) {
         fprintf(stderr, "Erro ao criar Fila.\n");
         freeArgs(&args);
         return EXIT_FAILURE;
     }
 
-    Pilha *pilhaAux = criaPilha();
+    Pilha pilhaAux = criaPilha();
     if (pilhaAux == NULL) {
         fprintf(stderr, "Erro ao criar Pilha.\n");
         destroiFila(filaFormas, NULL);
@@ -97,8 +99,8 @@ int main(int argc, char *argv[]) {
     int geoStatus = parseGeo(args, filaFormas, pilhaAux);
     if (geoStatus != 0) {
         fprintf(stderr, "Erro durante parseGeo (código %d).\n", geoStatus);
-        destroiPilha(pilhaAux, NULL);
-        destroiFila(filaFormas, (FuncaoLibera)destroiForma);
+    destroiPilha(pilhaAux, NULL);
+    destroiFila(filaFormas, (FuncaoLibera)destroiForma);
         freeArgs(&args);
         return EXIT_FAILURE;
     }
@@ -113,9 +115,28 @@ int main(int argc, char *argv[]) {
         free(caminhoSvg);
     }
 
-    int qryStatus = parseQry(args, filaFormas, caminhoSvg);
-    if (qryStatus != 0) {
-        fprintf(stderr, "Aviso: erro durante parseQry (código %d).\n", qryStatus);
+    // Processa .qry usando o novo módulo (retorna GameState)
+    GameState state = NULL;
+    if (getQryFile(args) != NULL && strlen(getQryFile(args)) > 0) {
+        printf("\n=== Processando arquivo .qry (novo módulo) ===\n");
+        state = parseQry(args, filaFormas, pilhaAux);
+        if (state == NULL) {
+            fprintf(stderr, "Aviso: erro durante parseQry.\n");
+        } else {
+            // Nome base do .qry para gerar o -qry.svg
+            char nomeBaseQry[256];
+            extrairNomeBase(getQryFile(args), nomeBaseQry, sizeof(nomeBaseQry));
+            char *caminhoSvgQry = construirCaminhoSaida(getOutputDir(args), nomeBaseQry, "-qry.svg");
+            if (caminhoSvgQry != NULL) {
+                svgGeraArquivoQry(caminhoSvgQry, state, 800, 600);
+                free(caminhoSvgQry);
+            }
+        }
+    }
+
+    // Destroi estado do jogo (devolve formas ao chão; chão é destruído abaixo)
+    if (state != NULL) {
+        destroiGameState(state);
     }
 
     destroiPilha(pilhaAux, NULL);

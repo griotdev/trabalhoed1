@@ -1,10 +1,10 @@
-#ifndef COLISAO_H
-#define COLISAO_H
+#ifndef COLISAO2_H
+#define COLISAO2_H
 
 #include "../../formas/formas/formas.h"
 
-int sobreposicao(Forma *a, Forma *b);
+int verificaSobreposicao(Forma *forma1, Forma *forma2);
 
-double areaForma(Forma *f);
+double calculaArea(Forma *forma);
 
-#endif
+#endif /* COLISAO2_H */

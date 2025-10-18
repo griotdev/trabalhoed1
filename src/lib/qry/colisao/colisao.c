@@ -3,100 +3,27 @@
 #include <math.h>
 #include <string.h>
 #include "colisao.h"
+#include "../../formas/circulo/circulo.h"
+#include "../../formas/retangulo/retangulo.h"
+#include "../../formas/linha/linha.h"
+#include "../../formas/texto/texto.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-int sobreposicao(Forma *a, Forma *b) {
-    if (a == NULL || b == NULL) return 0;
+static double dist(double x1,double y1,double x2,double y2){ double dx=x2-x1, dy=y2-y1; return sqrt(dx*dx+dy*dy);} 
 
-    TipoForma ta = getFormaTipo(a);
-    TipoForma tb = getFormaTipo(b);
+static int retSobrepoe(Retangulo r1, Retangulo r2){ return retangulosSobrepoe(r1, r2); }
 
-    if (ta == TIPO_CIRCULO && tb == TIPO_CIRCULO) {
-        Circulo ca = (Circulo)getFormaDados(a);
-        Circulo cb = (Circulo)getFormaDados(b);
-        double dx = getCirculoX(ca) - getCirculoX(cb);
-        double dy = getCirculoY(ca) - getCirculoY(cb);
-        double dist = sqrt(dx*dx + dy*dy);
-        return dist < (getCirculoRaio(ca) + getCirculoRaio(cb));
-    }
+static int circCirc(Circulo c1, Circulo c2){ return dist(getCirculoX(c1),getCirculoY(c1),getCirculoX(c2),getCirculoY(c2)) < (getCirculoRaio(c1)+getCirculoRaio(c2)); }
 
-    if (ta == TIPO_RETANGULO && tb == TIPO_RETANGULO) {
-        Retangulo r1 = (Retangulo)getFormaDados(a);
-        Retangulo r2 = (Retangulo)getFormaDados(b);
-        double x1 = getRetanguloX(r1);
-        double y1 = getRetanguloY(r1);
-        double w1 = getRetanguloLargura(r1);
-        double h1 = getRetanguloAltura(r1);
-        double x2 = getRetanguloX(r2);
-        double y2 = getRetanguloY(r2);
-        double w2 = getRetanguloLargura(r2);
-        double h2 = getRetanguloAltura(r2);
-        int overlapX = !(x1 + w1 < x2 || x2 + w2 < x1);
-        int overlapY = !(y1 + h1 < y2 || y2 + h2 < y1);
-        return overlapX && overlapY;
-    }
+static int circRet(Circulo c, Retangulo r){ double cx=getCirculoX(c), cy=getCirculoY(c), rr=getCirculoRaio(c); double rx=getRetanguloX(r), ry=getRetanguloY(r), rw=getRetanguloLargura(r), rh=getRetanguloAltura(r); double closestX = (cx<rx)?rx: (cx>rx+rw? rx+rw: cx); double closestY = (cy<ry)?ry: (cy>ry+rh? ry+rh: cy); return dist(cx,cy,closestX,closestY) < rr; }
 
-    // circle x rect
-    if (ta == TIPO_CIRCULO && tb == TIPO_RETANGULO) {
-        Circulo c = (Circulo)getFormaDados(a);
-        Retangulo r = (Retangulo)getFormaDados(b);
-        double cx = getCirculoX(c);
-        double cy = getCirculoY(c);
-        double rx = getRetanguloX(r);
-        double ry = getRetanguloY(r);
-        double rw = getRetanguloLargura(r);
-        double rh = getRetanguloAltura(r);
-        double nearestX = fmax(rx, fmin(cx, rx + rw));
-        double nearestY = fmax(ry, fmin(cy, ry + rh));
-        double dx = cx - nearestX;
-        double dy = cy - nearestY;
-        return (dx*dx + dy*dy) < (getCirculoRaio(c) * getCirculoRaio(c));
-    }
+static int circLinha(Circulo c, Linha l){ double cx=getCirculoX(c), cy=getCirculoY(c), r=getCirculoRaio(c); double x1=getLinhaX1(l), y1=getLinhaY1(l), x2=getLinhaX2(l), y2=getLinhaY2(l); double A=cx-x1, B=cy-y1, C=x2-x1, D=y2-y1; double dot=A*C+B*D, len=C*C+D*D; double param = (len!=0)? dot/len : -1; double xx,yy; if (param<0){xx=x1;yy=y1;} else if (param>1){xx=x2;yy=y2;} else {xx=x1+param*C;yy=y1+param*D;} return dist(cx,cy,xx,yy) < r; }
 
-    if (ta == TIPO_RETANGULO && tb == TIPO_CIRCULO) {
-        return sobreposicao(b, a);
-    }
+static int retLinha(Retangulo r, Linha l){ double x1=getLinhaX1(l),y1=getLinhaY1(l),x2=getLinhaX2(l),y2=getLinhaY2(l); double rx=getRetanguloX(r),ry=getRetanguloY(r),rw=getRetanguloLargura(r),rh=getRetanguloAltura(r); int p1=(x1>=rx&&x1<=rx+rw&&y1>=ry&&y1<=ry+rh); int p2=(x2>=rx&&x2<=rx+rw&&y2>=ry&&y2<=ry+rh); if (p1||p2) return 1; return 0; }
 
-    // For lines and texts we approximated per spec
-    if (ta == TIPO_LINHA || tb == TIPO_LINHA) {
-        // approximate: no collision detection for lines yet
-        return 0;
-    }
-    if (ta == TIPO_TEXTO || tb == TIPO_TEXTO) {
-        // approximate: no collision detection for texts yet
-        return 0;
-    }
+int verificaSobreposicao(Forma *f1, Forma *f2){ if (!f1||!f2) return 0; TipoForma t1=getFormaTipo(f1), t2=getFormaTipo(f2); void *d1=getFormaDados(f1), *d2=getFormaDados(f2); if (t1==TIPO_CIRCULO && t2==TIPO_CIRCULO) return circCirc((Circulo)d1,(Circulo)d2); if (t1==TIPO_CIRCULO && t2==TIPO_RETANGULO) return circRet((Circulo)d1,(Retangulo)d2); if (t1==TIPO_RETANGULO && t2==TIPO_CIRCULO) return circRet((Circulo)d2,(Retangulo)d1); if (t1==TIPO_RETANGULO && t2==TIPO_RETANGULO) return retSobrepoe((Retangulo)d1,(Retangulo)d2); if (t1==TIPO_CIRCULO && t2==TIPO_LINHA) return circLinha((Circulo)d1,(Linha)d2); if (t1==TIPO_LINHA && t2==TIPO_CIRCULO) return circLinha((Circulo)d2,(Linha)d1); if (t1==TIPO_RETANGULO && t2==TIPO_LINHA) return retLinha((Retangulo)d1,(Linha)d2); if (t1==TIPO_LINHA && t2==TIPO_RETANGULO) return retLinha((Retangulo)d2,(Linha)d1); return 0; }
 
-    return 0;
-}
-
-double areaForma(Forma *f) {
-    if (f == NULL) return 0.0;
-    TipoForma t = getFormaTipo(f);
-    if (t == TIPO_CIRCULO) {
-        Circulo c = (Circulo)getFormaDados(f);
-        double r = getCirculoRaio(c);
-        return M_PI * r * r;
-    }
-    if (t == TIPO_RETANGULO) {
-        Retangulo r = (Retangulo)getFormaDados(f);
-        return getRetanguloLargura(r) * getRetanguloAltura(r);
-    }
-    if (t == TIPO_LINHA) {
-        Linha l = (Linha)getFormaDados(f);
-        double dx = getLinhaX2(l) - getLinhaX1(l);
-        double dy = getLinhaY2(l) - getLinhaY1(l);
-        double compr = sqrt(dx*dx + dy*dy);
-        return 2.0 * compr;
-    }
-    if (t == TIPO_TEXTO) {
-        // approximate area as 20.0 * length
-        Texto txt = (Texto)getFormaDados(f);
-        const char *s = getTextoConteudo(txt);
-        return 20.0 * (s ? strlen(s) : 0);
-    }
-    return 0.0;
-}
+double calculaArea(Forma *f){ if (!f) return 0.0; TipoForma t=getFormaTipo(f); void *d=getFormaDados(f); switch (t){ case TIPO_CIRCULO: { double r=getCirculoRaio((Circulo)d); return M_PI*r*r; } case TIPO_RETANGULO: { return getRetanguloLargura((Retangulo)d)*getRetanguloAltura((Retangulo)d); } case TIPO_LINHA: { double x1=getLinhaX1((Linha)d), y1=getLinhaY1((Linha)d), x2=getLinhaX2((Linha)d), y2=getLinhaY2((Linha)d); double c=dist(x1,y1,x2,y2); return 2.0*c; } case TIPO_TEXTO: { const char *s=getTextoConteudo((Texto)d); return 20.0*strlen(s); } default: return 0.0; } }
