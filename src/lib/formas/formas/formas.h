@@ -56,4 +56,9 @@ void destroiForma(Forma *forma);
  */
 Forma* clonaForma(Forma *forma);
 
+/**
+ * Define a posição (âncora) de uma forma.
+ */
+void setFormaPosicao(Forma *forma, double x, double y);
+
 #endif /* FORMAS_H */

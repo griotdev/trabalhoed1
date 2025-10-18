@@ -71,3 +71,32 @@ void destroiForma(Forma *forma) {
     
     free(forma);
 }
+
+void setFormaPosicao(Forma *forma, double x, double y) {
+    if (forma == NULL || forma->dados == NULL) {
+        return;
+    }
+    
+    switch (forma->tipo) {
+        case TIPO_CIRCULO:
+            setCirculoCentro((Circulo*)forma->dados, x, y);
+            break;
+        case TIPO_RETANGULO:
+            setRetanguloAncora((Retangulo*)forma->dados, x, y);
+            break;
+        case TIPO_LINHA:
+            {
+                double x1, y1, x2, y2;
+                getLinhaP1((Linha*)forma->dados, &x1, &y1);
+                getLinhaP2((Linha*)forma->dados, &x2, &y2);
+                double dx = x2 - x1;
+                double dy = y2 - y1;
+                setLinhaP1((Linha*)forma->dados, x, y);
+                setLinhaP2((Linha*)forma->dados, x + dx, y + dy);
+            }
+            break;
+        case TIPO_TEXTO:
+            setTextoAncora((Texto*)forma->dados, x, y);
+            break;
+    }
+}
