@@ -55,9 +55,8 @@ void destroiArena(Arena *arena) {
     
     ArenaInternal *a = (ArenaInternal*)(*arena);
     
-    if (a->formasNaArena != NULL) {
-        destroiFila(a->formasNaArena, NULL);
-    }
+    // formasNaArena is a Fila (void*), not Fila*
+    destroiFila(a->formasNaArena, NULL);
     
     if (a->disparadores != NULL) {
         destroiTabelaDisparadores(&a->disparadores);

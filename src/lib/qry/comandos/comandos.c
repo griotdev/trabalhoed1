@@ -357,8 +357,8 @@ int exec_dsp(char *idDisparador, double dx, double dy, char modo, Arena arena, F
     setFormaPosicao(forma, xFinal, yFinal);
     
     Fila *formasNaArena = getArenaFormasNaArena(arena);
-    if (formasNaArena != NULL) {
-        enfileira(formasNaArena, forma);
+    if (formasNaArena != NULL && *formasNaArena != NULL) {
+        enfileira(*formasNaArena, forma);
     }
     
     setDisparadorPosicaoDisparo(disp, NULL);
@@ -451,38 +451,42 @@ int exec_calc(Arena arena, FILE *saidaTxt) {
 
     Fila *formasNaArena = getArenaFormasNaArena(arena);
     Fila *chao = getArenaChao(arena);
-    if (formasNaArena == NULL || chao == NULL) {
-        printf("  [DEBUG] Arena ou chao null\n");
+    if (formasNaArena == NULL || chao == NULL || *formasNaArena == NULL || *chao == NULL) {
+        fprintf(stderr, "Erro: arena ou chao invalidos\n");
         return 1;
     }
 
-    printf("  [DEBUG] formasNaArena ptr=%p, chao ptr=%p\n", (void*)formasNaArena, (void*)chao);
-    printf("  [DEBUG] tamanho formasNaArena: %d\n", tamanhoFila(*formasNaArena));
+    // Check if there are forms in arena
+    if (filaVazia(*formasNaArena)) {
+        if (saidaTxt != NULL) {
+            fprintf(saidaTxt, "arena vazia - nenhuma colisao processada\n");
+        }
+        return 0;
+    }
 
     // We'll process pairs in order of lançamento. To avoid destroying the original
     // queue while iterating, we'll dequeue into a temporary queue, examine pairs,
     // and then push results to the ground (chao) or clone and push to chao as needed.
     Fila temp = criaFila();
     if (temp == NULL) {
-        printf("  [DEBUG] criaFila temp failed\n");
+        fprintf(stderr, "Erro: falha ao criar fila temporaria\n");
         return 1;
     }
 
     // Move all formas para temp preserving order
     while (!filaVazia(*formasNaArena)) {
         void *v = desenfileira(*formasNaArena);
-        printf("  [DEBUG] movendo forma %p para temp\n", v);
-        enfileira(temp, v);
+        if (v != NULL) {
+            enfileira(temp, v);
+        }
     }
 
     double areaTotalEsmagada = 0.0;
 
     // Process consecutive pairs
     void *prev = desenfileira(temp);
-    printf("  [DEBUG] first prev=%p\n", prev);
     while (prev != NULL) {
         void *cur = desenfileira(temp);
-        printf("  [DEBUG] cur=%p\n", cur);
         if (cur == NULL) {
             // single remaining element: return to chao
             enfileira(*chao, prev);
@@ -491,7 +495,6 @@ int exec_calc(Arena arena, FILE *saidaTxt) {
 
         Forma *f1 = (Forma*)prev;
         Forma *f2 = (Forma*)cur;
-        printf("  [DEBUG] f1 id=%d, f2 id=%d\n", getFormaId(f1), getFormaId(f2));
 
         int sobre = sobreposicao(f1, f2);
         double a1 = areaForma(f1);

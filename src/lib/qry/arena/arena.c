@@ -3,6 +3,13 @@
 #include <string.h>
 #include "arena.h"
 
+// Forward declaration for cleanup
+static void liberaFormaVoid(void *f) {
+    if (f != NULL) {
+        destroiForma((Forma*)f);
+    }
+}
+
 typedef struct disparador_node {
     char *id;
     double x;
@@ -223,7 +230,8 @@ void destroiTabelaCarregadores(TabelaCarregadores *tabela) {
             free(atual->id);
         }
         if (atual->pilha != NULL) {
-            destroiPilha(atual->pilha, NULL);
+            // Destroy forms remaining in the carregador
+            destroiPilha(atual->pilha, liberaFormaVoid);
         }
         free(atual);
         atual = prox;

@@ -41,7 +41,8 @@ OBJECTS = $(OBJ_DIR)/main.o \
           $(OBJ_DIR)/fila.o $(OBJ_DIR)/pilha.o \
           $(OBJ_DIR)/parserGeo.o $(OBJ_DIR)/svg.o \
           $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/comandos.o $(OBJ_DIR)/arena.o \
-		  $(OBJ_DIR)/argumentHandler.o $(OBJ_DIR)/colisao.o
+		  $(OBJ_DIR)/argumentHandler.o $(OBJ_DIR)/colisao.o \
+		  $(OBJ_DIR)/svgQry.o $(OBJ_DIR)/saidaQry.o
 
 all: $(OBJ_DIR) $(PROJ_NAME)
 
@@ -96,6 +97,12 @@ $(OBJ_DIR)/argumentHandler.o: $(ARGUMENTOS_DIR)/argumentHandler.c $(ARGUMENTOS_D
 
 $(OBJ_DIR)/colisao.o: $(QRY_DIR)/colisao/colisao.c $(QRY_DIR)/colisao/colisao.h
 	$(CC) $(CFLAGS) -c $(QRY_DIR)/colisao/colisao.c -o $(OBJ_DIR)/colisao.o
+
+$(OBJ_DIR)/svgQry.o: $(QRY_DIR)/svgQry/svgQry.c $(QRY_DIR)/svgQry/svgQry.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/svgQry/svgQry.c -o $(OBJ_DIR)/svgQry.o
+
+$(OBJ_DIR)/saidaQry.o: $(QRY_DIR)/saida/saidaQry.c $(QRY_DIR)/saida/saidaQry.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/saida/saidaQry.c -o $(OBJ_DIR)/saidaQry.o
 
 clean:
 	rm -rf $(OBJ_DIR)
