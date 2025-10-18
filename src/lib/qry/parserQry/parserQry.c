@@ -3,6 +3,7 @@
 #include <string.h>
 #include "parserQry.h"
 #include "../comandos/comandos.h"
+#include "../arena/arena.h"
 #include "../../argumentos/argumentHandler.h"
 
 #define MAX_LINE 1024
@@ -10,8 +11,8 @@
 typedef struct arena_internal {
     Fila *chao;
     Fila *formasNaArena;
-    void *disparadores;
-    void *carregadores;
+    TabelaDisparadores disparadores;
+    TabelaCarregadores carregadores;
     int numDisparos;
     int numInstrucoes;
     int numEsmagadas;
@@ -28,13 +29,21 @@ Arena criaArena(void) {
     
     arena->chao = NULL;
     arena->formasNaArena = criaFila();
-    arena->disparadores = NULL;
-    arena->carregadores = NULL;
+    arena->disparadores = criaTabelaDisparadores();
+    arena->carregadores = criaTabelaCarregadores();
     arena->numDisparos = 0;
     arena->numInstrucoes = 0;
     arena->numEsmagadas = 0;
     arena->numClonadas = 0;
     arena->pontuacaoTotal = 0.0;
+    
+    if (arena->formasNaArena == NULL || arena->disparadores == NULL || arena->carregadores == NULL) {
+        if (arena->formasNaArena != NULL) destroiFila(arena->formasNaArena, NULL);
+        if (arena->disparadores != NULL) destroiTabelaDisparadores(&arena->disparadores);
+        if (arena->carregadores != NULL) destroiTabelaCarregadores(&arena->carregadores);
+        free(arena);
+        return NULL;
+    }
     
     return (Arena)arena;
 }
@@ -48,6 +57,14 @@ void destroiArena(Arena *arena) {
     
     if (a->formasNaArena != NULL) {
         destroiFila(a->formasNaArena, NULL);
+    }
+    
+    if (a->disparadores != NULL) {
+        destroiTabelaDisparadores(&a->disparadores);
+    }
+    
+    if (a->carregadores != NULL) {
+        destroiTabelaCarregadores(&a->carregadores);
     }
     
     free(a);
@@ -155,4 +172,82 @@ int parseQry(Args args, Fila *filaChao, const char *caminhoSvgBase) {
     (void)caminhoSvgBase;
     
     return 0;
+}
+
+TabelaDisparadores getArenaDisparadores(Arena arena) {
+    if (arena == NULL) return NULL;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->disparadores;
+}
+
+TabelaCarregadores getArenaCarregadores(Arena arena) {
+    if (arena == NULL) return NULL;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->carregadores;
+}
+
+Fila* getArenaChao(Arena arena) {
+    if (arena == NULL) return NULL;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->chao;
+}
+
+Fila* getArenaFormasNaArena(Arena arena) {
+    if (arena == NULL) return NULL;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->formasNaArena;
+}
+
+void incrementaNumDisparos(Arena arena) {
+    if (arena == NULL) return;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    a->numDisparos++;
+}
+
+void incrementaNumEsmagadas(Arena arena) {
+    if (arena == NULL) return;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    a->numEsmagadas++;
+}
+
+void incrementaNumClonadas(Arena arena) {
+    if (arena == NULL) return;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    a->numClonadas++;
+}
+
+void adicionaPontuacao(Arena arena, double pontos) {
+    if (arena == NULL) return;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    a->pontuacaoTotal += pontos;
+}
+
+int getArenaNumInstrucoes(Arena arena) {
+    if (arena == NULL) return 0;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->numInstrucoes;
+}
+
+int getArenaNumDisparos(Arena arena) {
+    if (arena == NULL) return 0;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->numDisparos;
+}
+
+int getArenaNumEsmagadas(Arena arena) {
+    if (arena == NULL) return 0;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->numEsmagadas;
+}
+
+int getArenaNumClonadas(Arena arena) {
+    if (arena == NULL) return 0;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->numClonadas;
+}
+
+double getArenaPontuacao(Arena arena) {
+    if (arena == NULL) return 0.0;
+    ArenaInternal *a = (ArenaInternal*)arena;
+    return a->pontuacaoTotal;
 }

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "comandos.h"
+#include "../arena/arena.h"
+#include "../parserQry/parserQry.h"
 
 static void trim(char *str) {
     if (str == NULL) return;
@@ -97,13 +99,31 @@ int exec_comando(char *linha, Arena arena, FILE *saidaTxt) {
 }
 
 int exec_pd(char *id, double x, double y, Arena arena, FILE *saidaTxt) {
-    (void)arena;
+    if (arena == NULL || id == NULL) {
+        return 1;
+    }
+    
+    TabelaDisparadores tabela = getArenaDisparadores(arena);
+    if (tabela == NULL) {
+        return 1;
+    }
+    
+    Disparador disp = criaDisparador(id, x, y);
+    if (disp == NULL) {
+        fprintf(stderr, "Erro ao criar disparador %s\n", id);
+        return 1;
+    }
+    
+    if (adicionaDisparador(tabela, disp) != 0) {
+        fprintf(stderr, "Erro ao adicionar disparador %s\n", id);
+        return 1;
+    }
     
     if (saidaTxt != NULL) {
         fprintf(saidaTxt, "disparador %s posicionado em (%.2f, %.2f)\n", id, x, y);
     }
     
-    printf("  Disparador %s criado em (%.2f, %.2f)\n", id, x, y);
+    printf("  Disparador %s posicionado em (%.2f, %.2f)\n", id, x, y);
     return 0;
 }
 
