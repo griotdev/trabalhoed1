@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parserQry.h"
+#include "../comandos/comandos.h"
 #include "../../argumentos/argumentHandler.h"
 
 #define MAX_LINE 1024
@@ -138,6 +139,11 @@ int parseQry(Args args, Fila *filaChao, const char *caminhoSvgBase) {
         a->numInstrucoes++;
         
         printf("  [*] %s\n", linha);
+        
+        int cmdStatus = exec_comando(linha, arena, NULL);
+        if (cmdStatus != 0) {
+            fprintf(stderr, "  Erro ao executar comando.\n");
+        }
     }
     
     printf("Parse do arquivo .qry concluído. %d linhas processadas.\n", numLinhas);
