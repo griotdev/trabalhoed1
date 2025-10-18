@@ -5,6 +5,7 @@
 #include "comandos.h"
 #include "../arena/arena.h"
 #include "../parserQry/parserQry.h"
+#include "../colisao/colisao.h"
 
 static void trim(char *str) {
     if (str == NULL) return;
@@ -383,25 +384,223 @@ int exec_dsp(char *idDisparador, double dx, double dy, char modo, Arena arena, F
 }
 
 int exec_rjd(char *idDisparador, char direcao, double dx, double dy, double ix, double iy, Arena arena, FILE *saidaTxt) {
-    (void)arena;
-    
+    if (arena == NULL || idDisparador == NULL) return 1;
+
+    TabelaDisparadores tabelaDisp = getArenaDisparadores(arena);
+    if (tabelaDisp == NULL) return 1;
+
+    Disparador disp = buscaDisparador(tabelaDisp, idDisparador);
+    if (disp == NULL) {
+        fprintf(stderr, "Erro: disparador %s não encontrado\n", idDisparador);
+        return 1;
+    }
+
     if (saidaTxt != NULL) {
-        fprintf(saidaTxt, "rajada: disparador=%s dir=%c dx=%.2f dy=%.2f ix=%.2f iy=%.2f\n", 
+        fprintf(saidaTxt, "rajada: disparador=%s dir=%c dx=%.2f dy=%.2f ix=%.2f iy=%.2f\n",
                 idDisparador, direcao, dx, dy, ix, iy);
     }
-    
-    printf("  Rajada: %s direção '%c' deslocamento (%.2f, %.2f) incremento (%.2f, %.2f)\n", 
-           idDisparador, direcao, dx, dy, ix, iy);
+
+    double curDx = dx;
+    double curDy = dy;
+    int count = 0;
+
+    while (1) {
+        // move one item to posição de disparo
+        int shftStatus = exec_shft(idDisparador, direcao, 1, arena, saidaTxt);
+        if (shftStatus != 0) {
+            // if shft reports error, stop
+            break;
+        }
+
+        // get forma na posição de disparo
+        Forma *f = getDisparadorPosicaoDisparo(disp);
+        if (f == NULL) {
+            // carregador esgotado
+            break;
+        }
+
+        // dispara a forma com deslocamento atual
+        int dspStatus = exec_dsp(idDisparador, curDx, curDy, 'i', arena, saidaTxt);
+        if (dspStatus != 0) {
+            // if dsp failed, stop to avoid infinite loop
+            break;
+        }
+
+        count++;
+        curDx += ix;
+        curDy += iy;
+    }
+
+    if (saidaTxt != NULL) {
+        fprintf(saidaTxt, "total de disparos na rajada: %d\n", count);
+    }
+
+    printf("  Rajada completa: %d disparos executados\n", count);
     return 0;
 }
 
 int exec_calc(Arena arena, FILE *saidaTxt) {
-    (void)arena;
-    
+    if (arena == NULL) return 1;
+
     if (saidaTxt != NULL) {
+        fprintf(saidaTxt, "[*] calc\n");
         fprintf(saidaTxt, "processando colisões e cálculos da arena\n");
     }
-    
+
     printf("  Calc: processando arena\n");
+
+    Fila *formasNaArena = getArenaFormasNaArena(arena);
+    Fila *chao = getArenaChao(arena);
+    if (formasNaArena == NULL || chao == NULL) {
+        printf("  [DEBUG] Arena ou chao null\n");
+        return 1;
+    }
+
+    printf("  [DEBUG] formasNaArena ptr=%p, chao ptr=%p\n", (void*)formasNaArena, (void*)chao);
+    printf("  [DEBUG] tamanho formasNaArena: %d\n", tamanhoFila(*formasNaArena));
+
+    // We'll process pairs in order of lançamento. To avoid destroying the original
+    // queue while iterating, we'll dequeue into a temporary queue, examine pairs,
+    // and then push results to the ground (chao) or clone and push to chao as needed.
+    Fila temp = criaFila();
+    if (temp == NULL) {
+        printf("  [DEBUG] criaFila temp failed\n");
+        return 1;
+    }
+
+    // Move all formas para temp preserving order
+    while (!filaVazia(*formasNaArena)) {
+        void *v = desenfileira(*formasNaArena);
+        printf("  [DEBUG] movendo forma %p para temp\n", v);
+        enfileira(temp, v);
+    }
+
+    double areaTotalEsmagada = 0.0;
+
+    // Process consecutive pairs
+    void *prev = desenfileira(temp);
+    printf("  [DEBUG] first prev=%p\n", prev);
+    while (prev != NULL) {
+        void *cur = desenfileira(temp);
+        printf("  [DEBUG] cur=%p\n", cur);
+        if (cur == NULL) {
+            // single remaining element: return to chao
+            enfileira(*chao, prev);
+            break;
+        }
+
+        Forma *f1 = (Forma*)prev;
+        Forma *f2 = (Forma*)cur;
+        printf("  [DEBUG] f1 id=%d, f2 id=%d\n", getFormaId(f1), getFormaId(f2));
+
+        int sobre = sobreposicao(f1, f2);
+        double a1 = areaForma(f1);
+        double a2 = areaForma(f2);
+
+        if (saidaTxt != NULL) {
+            fprintf(saidaTxt, "verificacao: id=%d area=%.2f vs id=%d area=%.2f -> %s\n",
+                    getFormaId(f1), a1, getFormaId(f2), a2, sobre ? "sobreposicao" : "sem sobreposicao");
+        }
+
+        if (sobre) {
+            if (a1 < a2) {
+                // f1 esmagado, f2 devolvido ao chao
+                areaTotalEsmagada += a1;
+                incrementaNumEsmagadas(arena);
+                adicionaPontuacao(arena, a1);
+                if (saidaTxt != NULL) {
+                    fprintf(saidaTxt, "resultado: id=%d < id=%d -> id=%d esmagado; id=%d devolvido ao chao\n",
+                            getFormaId(f1), getFormaId(f2), getFormaId(f1), getFormaId(f2));
+                }
+                // destroy f1
+                destroiForma(f1);
+                // return f2 to chao
+                enfileira(*chao, f2);
+            } else if (a1 > a2) {
+                // a1 > a2: according to spec, I changes color of J, both to chao; I is cloned
+                // change border color of f2 to border color of f1 and vice-versa in clone
+                // We attempt to set colors on specific shapes if possible via underlying APIs.
+                // Create clone of f1
+                Forma *clone = clonaForma(f1);
+                if (clone != NULL) {
+                    // swap colors by attempting type-specific setters
+                    TipoForma t1 = getFormaTipo(f1);
+                    TipoForma t2 = getFormaTipo(f2);
+                    // get colors from f1 and f2 if possible and swap
+                    if (t1 == TIPO_CIRCULO && t2 == TIPO_CIRCULO) {
+                        Circulo ca = (Circulo)getFormaDados(f1);
+                        Circulo cb = (Circulo)getFormaDados(f2);
+                        const char *b1 = getCirculoCorBorda(ca);
+                        const char *p1 = getCirculoCorPreenchimento(ca);
+                        const char *b2 = getCirculoCorBorda(cb);
+                        const char *p2 = getCirculoCorPreenchimento(cb);
+                        // set f2 colors to f1 border/body
+                        setCirculoCores(cb, b1, p1);
+                        // set clone colors to inverted (use f2 border/body)
+                        Circulo cclone = (Circulo)getFormaDados(clone);
+                        setCirculoCores(cclone, b2, p2);
+                    } else if (t1 == TIPO_RETANGULO && t2 == TIPO_RETANGULO) {
+                        Retangulo r1 = (Retangulo)getFormaDados(f1);
+                        Retangulo r2 = (Retangulo)getFormaDados(f2);
+                        const char *b1 = getRetanguloCorBorda(r1);
+                        const char *p1 = getRetanguloCorPreenchimento(r1);
+                        const char *b2 = getRetanguloCorBorda(r2);
+                        const char *p2 = getRetanguloCorPreenchimento(r2);
+                        setRetanguloCores(r2, b1, p1);
+                        Retangulo rclone = (Retangulo)getFormaDados(clone);
+                        setRetanguloCores(rclone, b2, p2);
+                    } else {
+                        // for mixed types or others, just enqueue clone without color change
+                    }
+
+                    // both original forms return to chao
+                    enfileira(*chao, f1);
+                    enfileira(*chao, f2);
+                    // enqueue clone after them
+                    enfileira(*chao, clone);
+                    incrementaNumClonadas(arena);
+                    if (saidaTxt != NULL) {
+                        fprintf(saidaTxt, "resultado: id=%d > id=%d -> cores atualizadas; clone id criado\n",
+                                getFormaId(f1), getFormaId(f2));
+                    }
+                } else {
+                    // if clone failed, just return originals
+                    enfileira(*chao, f1);
+                    enfileira(*chao, f2);
+                }
+            } else {
+                // equal areas: both return to chao
+                enfileira(*chao, f1);
+                enfileira(*chao, f2);
+                if (saidaTxt != NULL) {
+                    fprintf(saidaTxt, "resultado: areas iguais -> ambos devolvidos ao chao\n");
+                }
+            }
+        } else {
+            // no overlap: both go back to chao
+            enfileira(*chao, f1);
+            enfileira(*chao, f2);
+            if (saidaTxt != NULL) {
+                fprintf(saidaTxt, "resultado: sem sobreposicao -> ambos devolvidos ao chao\n");
+            }
+        }
+
+        prev = desenfileira(temp);
+    }
+
+    // cleanup temp
+    if (!filaVazia(temp)) {
+        void *r;
+        while ((r = desenfileira(temp)) != NULL) {
+            enfileira(*chao, r);
+        }
+    }
+    destroiFila(temp, NULL);
+
+    if (saidaTxt != NULL) {
+        fprintf(saidaTxt, "area total esmagada: %.2f\n", areaTotalEsmagada);
+        fprintf(saidaTxt, "pontuacao atual: %.2f\n", getArenaPontuacao(arena));
+    }
+
     return 0;
 }

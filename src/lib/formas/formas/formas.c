@@ -79,24 +79,51 @@ void setFormaPosicao(Forma *forma, double x, double y) {
     
     switch (forma->tipo) {
         case TIPO_CIRCULO:
-            setCirculoCentro((Circulo*)forma->dados, x, y);
+            setCirculoPosicao((Circulo*)forma->dados, x, y);
             break;
         case TIPO_RETANGULO:
-            setRetanguloAncora((Retangulo*)forma->dados, x, y);
+            setRetanguloPosicao((Retangulo*)forma->dados, x, y);
             break;
         case TIPO_LINHA:
             {
-                double x1, y1, x2, y2;
-                getLinhaP1((Linha*)forma->dados, &x1, &y1);
-                getLinhaP2((Linha*)forma->dados, &x2, &y2);
-                double dx = x2 - x1;
-                double dy = y2 - y1;
-                setLinhaP1((Linha*)forma->dados, x, y);
-                setLinhaP2((Linha*)forma->dados, x + dx, y + dy);
+                double x1 = getLinhaX1((Linha*)forma->dados);
+                double y1 = getLinhaY1((Linha*)forma->dados);
+                double dx = x - x1;
+                double dy = y - y1;
+                setLinhaPosicao((Linha*)forma->dados, dx, dy);
             }
             break;
         case TIPO_TEXTO:
-            setTextoAncora((Texto*)forma->dados, x, y);
+            setTextoPosicao((Texto*)forma->dados, x, y);
             break;
     }
+}
+
+Forma* clonaForma(Forma *forma) {
+    if (forma == NULL || forma->dados == NULL) {
+        return NULL;
+    }
+
+    void *clone_data = NULL;
+
+    switch (forma->tipo) {
+        case TIPO_CIRCULO:
+            clone_data = clonaCirculo((Circulo*)forma->dados);
+            break;
+        case TIPO_RETANGULO:
+            clone_data = clonaRetangulo((Retangulo*)forma->dados);
+            break;
+        case TIPO_LINHA:
+            clone_data = clonaLinha((Linha*)forma->dados);
+            break;
+        case TIPO_TEXTO:
+            clone_data = clonaTexto((Texto*)forma->dados);
+            break;
+    }
+
+    if (clone_data == NULL) {
+        return NULL;
+    }
+
+    return criaForma(forma->tipo, clone_data);
 }

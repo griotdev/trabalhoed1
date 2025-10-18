@@ -41,7 +41,7 @@ OBJECTS = $(OBJ_DIR)/main.o \
           $(OBJ_DIR)/fila.o $(OBJ_DIR)/pilha.o \
           $(OBJ_DIR)/parserGeo.o $(OBJ_DIR)/svg.o \
           $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/comandos.o $(OBJ_DIR)/arena.o \
-          $(OBJ_DIR)/argumentHandler.o
+		  $(OBJ_DIR)/argumentHandler.o $(OBJ_DIR)/colisao.o
 
 all: $(OBJ_DIR) $(PROJ_NAME)
 
@@ -93,6 +93,9 @@ $(OBJ_DIR)/arena.o: $(QRY_DIR)/arena/arena.c $(QRY_DIR)/arena/arena.h
 
 $(OBJ_DIR)/argumentHandler.o: $(ARGUMENTOS_DIR)/argumentHandler.c $(ARGUMENTOS_DIR)/argumentHandler.h
 	$(CC) $(CFLAGS) -c $(ARGUMENTOS_DIR)/argumentHandler.c -o $(OBJ_DIR)/argumentHandler.o
+
+$(OBJ_DIR)/colisao.o: $(QRY_DIR)/colisao/colisao.c $(QRY_DIR)/colisao/colisao.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/colisao/colisao.c -o $(OBJ_DIR)/colisao.o
 
 clean:
 	rm -rf $(OBJ_DIR)

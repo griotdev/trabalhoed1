@@ -10,7 +10,7 @@
 
 typedef struct arena_internal {
     Fila *chao;
-    Fila *formasNaArena;
+    Fila formasNaArena;
     TabelaDisparadores disparadores;
     TabelaCarregadores carregadores;
     int numDisparos;
@@ -195,7 +195,7 @@ Fila* getArenaChao(Arena arena) {
 Fila* getArenaFormasNaArena(Arena arena) {
     if (arena == NULL) return NULL;
     ArenaInternal *a = (ArenaInternal*)arena;
-    return a->formasNaArena;
+    return &a->formasNaArena;
 }
 
 void incrementaNumDisparos(Arena arena) {
