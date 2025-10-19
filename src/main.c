@@ -123,10 +123,14 @@ int main(int argc, char *argv[]) {
         if (state == NULL) {
             fprintf(stderr, "Aviso: erro durante parseQry.\n");
         } else {
-            // Nome base do .qry para gerar o -qry.svg
+            // Nome final deve ser (geoBase)-(qryBase).svg
             char nomeBaseQry[256];
             extrairNomeBase(getQryFile(args), nomeBaseQry, sizeof(nomeBaseQry));
-            char *caminhoSvgQry = construirCaminhoSaida(getOutputDir(args), nomeBaseQry, "-qry.svg");
+
+            char combinado[512];
+            snprintf(combinado, sizeof(combinado), "%s-%s", nomeBase, nomeBaseQry);
+
+            char *caminhoSvgQry = construirCaminhoSaida(getOutputDir(args), combinado, ".svg");
             if (caminhoSvgQry != NULL) {
                 svgGeraArquivoQry(caminhoSvgQry, state, 800, 600);
                 free(caminhoSvgQry);

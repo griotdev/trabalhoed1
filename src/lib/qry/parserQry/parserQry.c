@@ -48,14 +48,29 @@ GameState parseQry(Args args, Fila fila, Pilha pilha) {
     char *caminho = construirCaminhoQry(getEntryDir(args), qry); if (!caminho){ fprintf(stderr,"Erro construindo caminho .qry\n"); return NULL; }
     FILE *arq = fopen(caminho, "r"); if (!arq){ fprintf(stderr,"Erro ao abrir .qry: %s\n", caminho); free(caminho); return NULL; }
     printf("Lendo arquivo de consultas: %s\n", caminho); free(caminho);
-    const char *leaf = nomeBase(qry);
-    char base[256];
-    size_t n = strlen(leaf);
-    if (n >= sizeof(base)) n = sizeof(base)-1;
-    memcpy(base, leaf, n); base[n] = '\0';
-    char *dot = strrchr(base, '.');
+    // Monta nome (geoBase)-(qryBase).txt
+    const char *leafQry = nomeBase(qry);
+    char qryBase[256];
+    size_t n = strlen(leafQry);
+    if (n >= sizeof(qryBase)) n = sizeof(qryBase)-1;
+    memcpy(qryBase, leafQry, n); qryBase[n] = '\0';
+    char *dot = strrchr(qryBase, '.');
     if (dot) *dot = '\0';
-    char *pathTxt = construirCaminhoSaida(getOutputDir(args), base, "-q.txt"); FILE *out = pathTxt? fopen(pathTxt, "w") : NULL; if (out){ fprintf(out, "# Resultado da execução do arquivo .qry\n\n"); }
+
+    char geoBase[256];
+    const char *geoLeaf = nomeBase(getGeoFile(args));
+    size_t gn = strlen(geoLeaf);
+    if (gn >= sizeof(geoBase)) gn = sizeof(geoBase)-1;
+    memcpy(geoBase, geoLeaf, gn); geoBase[gn] = '\0';
+    char *gdot = strrchr(geoBase, '.');
+    if (gdot) *gdot = '\0';
+
+    char combinado[600];
+    snprintf(combinado, sizeof(combinado), "%s-%s", geoBase, qryBase);
+
+    char *pathTxt = construirCaminhoSaida(getOutputDir(args), combinado, ".txt");
+    FILE *out = pathTxt? fopen(pathTxt, "w") : NULL;
+    if (out){ fprintf(out, "# Resultado da execução do arquivo .qry\n\n"); }
     GameState state = criaGameState(fila);
     char linha[MAX_LINE]; while (fgets(linha, sizeof(linha), arq)){
         size_t len=strlen(linha); if (len>0 && linha[len-1]=='\n') linha[len-1]='\0'; if (linha[0]=='\0' || linha[0]=='#') continue; processarLinha(linha, &state, out);
