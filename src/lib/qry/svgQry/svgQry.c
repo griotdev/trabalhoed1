@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <string.h>
 #include "svgQry.h"
 #include "../gameState/gameState.h"
 #include "../disparador/disparador.h"
@@ -26,16 +27,20 @@ static void atualizaBBoxForma(Forma *f, double *minX, double *minY, double *maxX
             Circulo c = (Circulo)getFormaDados(f);
             double x = getCirculoX(c), y = getCirculoY(c), r = getCirculoRaio(c);
             double lx = x - r, rx = x + r, ty = y - r, by = y + r;
-            if (lx < *minX) *minX = lx; if (rx > *maxX) *maxX = rx;
-            if (ty < *minY) *minY = ty; if (by > *maxY) *maxY = by;
+            if (lx < *minX) { *minX = lx; }
+            if (rx > *maxX) { *maxX = rx; }
+            if (ty < *minY) { *minY = ty; }
+            if (by > *maxY) { *maxY = by; }
             break;
         }
         case TIPO_RETANGULO: {
             Retangulo r = (Retangulo)getFormaDados(f);
             double x = getRetanguloX(r), y = getRetanguloY(r);
             double w = getRetanguloLargura(r), h = getRetanguloAltura(r);
-            if (x < *minX) *minX = x; if (y < *minY) *minY = y;
-            if (x + w > *maxX) *maxX = x + w; if (y + h > *maxY) *maxY = y + h;
+            if (x < *minX) { *minX = x; }
+            if (y < *minY) { *minY = y; }
+            if (x + w > *maxX) { *maxX = x + w; }
+            if (y + h > *maxY) { *maxY = y + h; }
             break;
         }
         case TIPO_LINHA: {
@@ -43,8 +48,10 @@ static void atualizaBBoxForma(Forma *f, double *minX, double *minY, double *maxX
             double x1 = getLinhaX1(l), y1 = getLinhaY1(l), x2 = getLinhaX2(l), y2 = getLinhaY2(l);
             double lx = fmin(x1, x2), rx = fmax(x1, x2);
             double ty = fmin(y1, y2), by = fmax(y1, y2);
-            if (lx < *minX) *minX = lx; if (rx > *maxX) *maxX = rx;
-            if (ty < *minY) *minY = ty; if (by > *maxY) *maxY = by;
+            if (lx < *minX) { *minX = lx; }
+            if (rx > *maxX) { *maxX = rx; }
+            if (ty < *minY) { *minY = ty; }
+            if (by > *maxY) { *maxY = by; }
             break;
         }
         case TIPO_TEXTO: {
@@ -54,8 +61,10 @@ static void atualizaBBoxForma(Forma *f, double *minX, double *minY, double *maxX
             const char *s = getTextoConteudo(txt);
             double w = (s ? strlen(s) : 0) * (fs * 0.6);
             double h = fs;
-            if (x < *minX) *minX = x; if (y - h < *minY) *minY = y - h;
-            if (x + w > *maxX) *maxX = x + w; if (y > *maxY) *maxY = y;
+            if (x < *minX) { *minX = x; }
+            if (y - h < *minY) { *minY = y - h; }
+            if (x + w > *maxX) { *maxX = x + w; }
+            if (y > *maxY) { *maxY = y; }
             break;
         }
         default: break;
@@ -70,8 +79,11 @@ static void calculaBBoxState(GameState state, double *outMinX, double *outMinY, 
     for (int i=0;i<n;i++) if (ds[i]){
         double x = getDisparadorX(ds[i]); double y = getDisparadorY(ds[i]);
         double lx = x - 8, rx = x + 8, ty = y - 8, by = y + 8;
-        if (lx < minX) minX = lx; if (rx > maxX) maxX = rx;
-        if (ty < minY) minY = ty; if (by > maxY) maxY = by; tem = 1;
+        if (lx < minX) { minX = lx; }
+        if (rx > maxX) { maxX = rx; }
+        if (ty < minY) { minY = ty; }
+        if (by > maxY) { maxY = by; }
+        tem = 1;
     }
     // Arena
     Fila arena = getArena(state);
@@ -93,8 +105,11 @@ static void calculaBBoxState(GameState state, double *outMinX, double *outMinY, 
         }
         while (!filaVazia(tmp)){ Forma *f=(Forma*)desenfileira(tmp); enfileira(chao, f);} destroiFila(tmp, NULL);
     }
-    if (outMinX) *outMinX = minX; if (outMinY) *outMinY = minY;
-    if (outMaxX) *outMaxX = maxX; if (outMaxY) *outMaxY = maxY; if (outTemAlgo) *outTemAlgo = tem;
+    if (outMinX) { *outMinX = minX; }
+    if (outMinY) { *outMinY = minY; }
+    if (outMaxX) { *outMaxX = maxX; }
+    if (outMaxY) { *outMaxY = maxY; }
+    if (outTemAlgo) { *outTemAlgo = tem; }
 }
 
 int svgGeraArquivoQry(const char *nomeArquivo, GameState state, int largura, int altura){
@@ -122,7 +137,7 @@ int svgGeraArquivoQry(const char *nomeArquivo, GameState state, int largura, int
     }
     fprintf(arq, "  <!-- Formas no chão (opacidade reduzida) -->\n");
     Fila chao = getChao(state); if (chao && !filaVazia(chao)){
-    Fila tmp = criaFila(); while (!filaVazia(chao)){ Forma *f=(Forma*)desenfileira(chao); if (f){ fprintf(arq, "  <g opacity=\"0.3\">\n"); svgEscreveForma(arq, f); fprintf(arq, "  </g>\n"); enfileira(tmp, f);} }
+    Fila tmp = criaFila(); while (!filaVazia(chao)){ Forma *f=(Forma*)desenfileira(chao); if (f){ fprintf(arq, "  <g opacity=\"0.6\">\n"); svgEscreveForma(arq, f); fprintf(arq, "  </g>\n"); enfileira(tmp, f);} }
     while (!filaVazia(tmp)){ Forma *f=(Forma*)desenfileira(tmp); enfileira(chao, f);} destroiFila(tmp, NULL);
     }
     if (temAlgo){ fprintf(arq, "  </g>\n"); }
