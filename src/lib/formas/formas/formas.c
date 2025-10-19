@@ -21,7 +21,10 @@ Forma* criaForma(TipoForma tipo, void *dados) {
 }
 
 TipoForma getFormaTipo(Forma *f) {
-    return f ? f->tipo : -1;
+    if (!f) {
+        return (TipoForma)-1; // Sentinel for inválido; avoids signedness warning
+    }
+    return f->tipo;
 }
 
 void* getFormaDados(Forma *f) {

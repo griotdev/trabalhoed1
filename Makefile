@@ -1,12 +1,20 @@
+## Root Makefile: full build (no delegation), binary at project root
+
 CC = gcc
 CFLAGS = -std=c99 -fstack-protector-all -Wall -Wextra -Werror=implicit-function-declaration
 LDFLAGS = -lm
 
 PROJ_NAME = ted
 
-SRC_DIR = .
-LIB_DIR = lib
-OBJ_DIR = obj
+# Defaults for convenience targets (override with: make run GEO=... QRY=...)
+ENTRY_DIR ?= testes
+OUTPUT_DIR ?= saida
+GEO ?= figs-alet.geo
+# QRY is optional
+
+SRC_DIR = src
+LIB_DIR = $(SRC_DIR)/lib
+OBJ_DIR = $(SRC_DIR)/obj
 
 FORMAS_DIR = $(LIB_DIR)/formas
 ESTRUTURAS_DIR = $(LIB_DIR)/estruturas
@@ -14,7 +22,7 @@ GEO_DIR = $(LIB_DIR)/geo
 QRY_DIR = $(LIB_DIR)/qry
 ARGUMENTOS_DIR = $(LIB_DIR)/argumentos
 
-MAIN_SRC = main.c
+MAIN_SRC = $(SRC_DIR)/main.c
 
 FORMAS_SRC = $(FORMAS_DIR)/circulo/circulo.c \
              $(FORMAS_DIR)/retangulo/retangulo.c \
@@ -32,6 +40,7 @@ QRY_SRC = $(QRY_DIR)/parserQry/parserQry.c \
 		  $(QRY_DIR)/gameState/gameState.c \
 		  $(QRY_DIR)/gameCommands/gameCommands.c \
 		  $(QRY_DIR)/formaUtils/formaUtils.c \
+		  $(QRY_DIR)/formaUtils/colorRules.c \
 		  $(QRY_DIR)/disparador/disparador.c \
 		  $(QRY_DIR)/carregadorManager/carregadorManager.c
 
@@ -43,9 +52,11 @@ OBJECTS = $(OBJ_DIR)/main.o \
           $(OBJ_DIR)/circulo.o $(OBJ_DIR)/retangulo.o $(OBJ_DIR)/linha.o $(OBJ_DIR)/texto.o $(OBJ_DIR)/formas.o \
           $(OBJ_DIR)/fila.o $(OBJ_DIR)/pilha.o \
           $(OBJ_DIR)/parserGeo.o $(OBJ_DIR)/svg.o \
-          $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/gameState.o $(OBJ_DIR)/gameCommands.o $(OBJ_DIR)/formaUtils.o $(OBJ_DIR)/disparador.o $(OBJ_DIR)/carregadorManager.o \
+          $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/gameState.o $(OBJ_DIR)/gameCommands.o $(OBJ_DIR)/formaUtils.o $(OBJ_DIR)/colorRules.o $(OBJ_DIR)/disparador.o $(OBJ_DIR)/carregadorManager.o \
 		  $(OBJ_DIR)/argumentHandler.o $(OBJ_DIR)/colisao.o \
 		  $(OBJ_DIR)/svgQry.o $(OBJ_DIR)/saidaQry.o
+
+.PHONY: all clean distclean run valgrind
 
 all: $(OBJ_DIR) $(PROJ_NAME)
 
@@ -56,8 +67,8 @@ $(PROJ_NAME): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(PROJ_NAME) $(OBJECTS) $(LDFLAGS)
 	@echo "Executável '$(PROJ_NAME)' criado com sucesso!"
 
-$(OBJ_DIR)/main.o: main.c
-	$(CC) $(CFLAGS) -c main.c -o $(OBJ_DIR)/main.o
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(OBJ_DIR)/main.o
 
 $(OBJ_DIR)/circulo.o: $(FORMAS_DIR)/circulo/circulo.c $(FORMAS_DIR)/circulo/circulo.h
 	$(CC) $(CFLAGS) -c $(FORMAS_DIR)/circulo/circulo.c -o $(OBJ_DIR)/circulo.o
@@ -98,6 +109,9 @@ $(OBJ_DIR)/gameCommands.o: $(QRY_DIR)/gameCommands/gameCommands.c $(QRY_DIR)/gam
 $(OBJ_DIR)/formaUtils.o: $(QRY_DIR)/formaUtils/formaUtils.c $(QRY_DIR)/formaUtils/formaUtils.h
 	$(CC) $(CFLAGS) -c $(QRY_DIR)/formaUtils/formaUtils.c -o $(OBJ_DIR)/formaUtils.o
 
+$(OBJ_DIR)/colorRules.o: $(QRY_DIR)/formaUtils/colorRules.c $(QRY_DIR)/formaUtils/colorRules.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/formaUtils/colorRules.c -o $(OBJ_DIR)/colorRules.o
+
 $(OBJ_DIR)/disparador.o: $(QRY_DIR)/disparador/disparador.c $(QRY_DIR)/disparador/disparador.h
 	$(CC) $(CFLAGS) -c $(QRY_DIR)/disparador/disparador.c -o $(OBJ_DIR)/disparador.o
 
@@ -118,18 +132,23 @@ $(OBJ_DIR)/saidaQry.o: $(QRY_DIR)/saida/saidaQry.c $(QRY_DIR)/saida/saidaQry.h
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(PROJ_NAME).exe
-	rm -f $(PROJ_NAME)
+	rm -f $(PROJ_NAME) $(PROJ_NAME).exe
 	@echo "Arquivos de compilação removidos."
 
 distclean: clean
-	rm -f ../saida/*
+	rm -f $(OUTPUT_DIR)/*
 	@echo "Diretório de saída limpo."
 
-run: $(PROJ_NAME)
-	./$(PROJ_NAME) -f ../testes/figs-alet.geo -o ../saida/
+run: all
+	@if [ -n "$(QRY)" ]; then \
+		./$(PROJ_NAME) -e "$(ENTRY_DIR)" -f "$(GEO)" -o "$(OUTPUT_DIR)" -q "$(QRY)"; \
+	else \
+		./$(PROJ_NAME) -e "$(ENTRY_DIR)" -f "$(GEO)" -o "$(OUTPUT_DIR)"; \
+	fi
 
-valgrind: $(PROJ_NAME)
-	valgrind --leak-check=full --show-leak-kinds=all ./$(PROJ_NAME) -f ../testes/figs-alet.geo -o ../saida/
-
-.PHONY: all clean distclean run valgrind
+valgrind: all
+	@if [ -n "$(QRY)" ]; then \
+		valgrind --leak-check=full --show-leak-kinds=all ./$(PROJ_NAME) -e "$(ENTRY_DIR)" -f "$(GEO)" -o "$(OUTPUT_DIR)" -q "$(QRY)"; \
+	else \
+		valgrind --leak-check=full --show-leak-kinds=all ./$(PROJ_NAME) -e "$(ENTRY_DIR)" -f "$(GEO)" -o "$(OUTPUT_DIR)"; \
+	fi

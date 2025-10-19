@@ -3,6 +3,7 @@
 #include "gameCommands.h"
 #include "../disparador/disparador.h"
 #include "../formaUtils/formaUtils.h"
+#include "../formaUtils/colorRules.h"
 #include "../colisao/colisao.h"
 #include "../../formas/formas/formas.h"
 
@@ -68,7 +69,34 @@ void comando_calc(GameState *state, FILE *saida){
     int num=0; Forma *arr[1000]; while (!filaVazia(arena)) arr[num++] = (Forma*)desenfileira(arena);
     if (saida) fprintf(saida, "    Processando %d formas na arena\n", num);
     int col=0, esmag=0, clones=0; 
-    for (int i=0;i<num;i++) if (arr[i]) for (int j=i+1;j<num;j++) if (arr[j]) if (verificaSobreposicao(arr[i], arr[j])){ col++; double ai = calculaArea(arr[i]); double aj = calculaArea(arr[j]); if (saida) fprintf(saida, "    Colisão %d detectada (áreas: %.2f vs %.2f)\n", col, ai, aj); if (ai < aj){ if (saida) fprintf(saida, "      Forma I esmagada (menor área)\n"); destroiForma(arr[i]); arr[i]=NULL; esmag++; trocaCores(arr[j]); if (saida) fprintf(saida, "      Forma J: cores trocadas\n"); Forma *c = clonaForma(arr[j]); if (c){ enfileira(chao, c); clones++; if (saida) fprintf(saida, "      Clone de J criado e adicionado ao chão\n"); } } else if (aj < ai){ if (saida) fprintf(saida, "      Forma J esmagada (menor área)\n"); destroiForma(arr[j]); arr[j]=NULL; esmag++; trocaCores(arr[i]); if (saida) fprintf(saida, "      Forma I: cores trocadas\n"); Forma *c = clonaForma(arr[i]); if (c){ enfileira(chao, c); clones++; if (saida) fprintf(saida, "      Clone de I criado e adicionado ao chão\n"); } } else { if (saida) fprintf(saida, "      Áreas iguais - ambas esmagadas\n"); destroiForma(arr[i]); destroiForma(arr[j]); arr[i]=arr[j]=NULL; esmag+=2; } }
+    for (int i=0;i<num;i++) if (arr[i]) for (int j=i+1;j<num;j++) if (arr[j]) if (verificaSobreposicao(arr[i], arr[j])){
+        col++; double ai = calculaArea(arr[i]); double aj = calculaArea(arr[j]);
+        if (saida) fprintf(saida, "    Colisão %d detectada (áreas: %.2f vs %.2f)\n", col, ai, aj);
+        if (ai < aj){
+            if (saida) fprintf(saida, "      Forma I esmagada (menor área)\n");
+            // Ajusta cor do sobrevivente J com base em I (aplica complementar se I for texto/linha)
+            aplicaCorDeFonte(arr[j], arr[i]);
+            // Agora destrói I
+            destroiForma(arr[i]); arr[i]=NULL; esmag++;
+            // Mantém o swap das cores do sobrevivente
+            trocaCores(arr[j]);
+            if (saida) fprintf(saida, "      Forma J: cores trocadas (e ajustadas por regra)\n");
+            Forma *c = clonaForma(arr[j]); if (c){ enfileira(chao, c); clones++; if (saida) fprintf(saida, "      Clone de J criado e adicionado ao chão\n"); }
+        } else if (aj < ai){
+            if (saida) fprintf(saida, "      Forma J esmagada (menor área)\n");
+            // Ajusta cor do sobrevivente I com base em J (aplica complementar se J for texto/linha)
+            aplicaCorDeFonte(arr[i], arr[j]);
+            // Agora destrói J
+            destroiForma(arr[j]); arr[j]=NULL; esmag++;
+            // Mantém o swap das cores do sobrevivente
+            trocaCores(arr[i]);
+            if (saida) fprintf(saida, "      Forma I: cores trocadas (e ajustadas por regra)\n");
+            Forma *c = clonaForma(arr[i]); if (c){ enfileira(chao, c); clones++; if (saida) fprintf(saida, "      Clone de I criado e adicionado ao chão\n"); }
+        } else {
+            if (saida) fprintf(saida, "      Áreas iguais - ambas esmagadas\n");
+            destroiForma(arr[i]); destroiForma(arr[j]); arr[i]=arr[j]=NULL; esmag+=2;
+        }
+    }
     int sob=0; for (int i=0;i<num;i++) if (arr[i]){ enfileira(chao, arr[i]); sob++; }
     if (saida){ fprintf(saida, "    Resultado: %d colisões detectadas\n", col); fprintf(saida, "    %d formas esmagadas, %d clones criados\n", esmag, clones); fprintf(saida, "    %d formas sobreviventes retornaram ao chão\n", sob); }
 }
