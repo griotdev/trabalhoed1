@@ -4,50 +4,59 @@
 #include <time.h>
 #include "saidaQry.h"
 
-FILE* saidaQryAbreArquivo(const char *nomeArquivo) {
-    if (nomeArquivo == NULL) {
+FILE *saidaQryAbreArquivo(const char *nomeArquivo)
+{
+    if (nomeArquivo == NULL)
+    {
         return NULL;
     }
-    
+
     FILE *arquivo = fopen(nomeArquivo, "w");
-    if (arquivo == NULL) {
+    if (arquivo == NULL)
+    {
         fprintf(stderr, "Erro ao criar arquivo de saída QRY: %s\n", nomeArquivo);
         return NULL;
     }
-    
+
     // Cabeçalho do arquivo
     fprintf(arquivo, "========================================\n");
     fprintf(arquivo, "  LOG DE EXECUÇÃO - BOCHA GEOMÉTRICA\n");
     fprintf(arquivo, "========================================\n\n");
-    
+
     time_t now = time(NULL);
     fprintf(arquivo, "Data/Hora: %s\n", ctime(&now));
-    
+
     return arquivo;
 }
 
-void saidaQryLogComando(FILE *arquivo, const char *linha) {
-    if (arquivo == NULL || linha == NULL) {
+void saidaQryLogComando(FILE *arquivo, const char *linha)
+{
+    if (arquivo == NULL || linha == NULL)
+    {
         return;
     }
-    
+
     fprintf(arquivo, "\n[CMD] %s\n", linha);
 }
 
-void saidaQryLogEvento(FILE *arquivo, const char *evento) {
-    if (arquivo == NULL || evento == NULL) {
+void saidaQryLogEvento(FILE *arquivo, const char *evento)
+{
+    if (arquivo == NULL || evento == NULL)
+    {
         return;
     }
-    
+
     fprintf(arquivo, "  -> %s\n", evento);
 }
 
-void saidaQryLogResumo(FILE *arquivo, int numInstrucoes, int numDisparos, 
-                       int numEsmagadas, int numClonadas, double pontuacao) {
-    if (arquivo == NULL) {
+void saidaQryLogResumo(FILE *arquivo, int numInstrucoes, int numDisparos,
+                       int numEsmagadas, int numClonadas, double pontuacao)
+{
+    if (arquivo == NULL)
+    {
         return;
     }
-    
+
     fprintf(arquivo, "\n========================================\n");
     fprintf(arquivo, "  RESUMO FINAL\n");
     fprintf(arquivo, "========================================\n\n");
@@ -59,10 +68,12 @@ void saidaQryLogResumo(FILE *arquivo, int numInstrucoes, int numDisparos,
     fprintf(arquivo, "\n========================================\n");
 }
 
-void saidaQryFechaArquivo(FILE *arquivo) {
-    if (arquivo == NULL) {
+void saidaQryFechaArquivo(FILE *arquivo)
+{
+    if (arquivo == NULL)
+    {
         return;
     }
-    
+
     fclose(arquivo);
 }
