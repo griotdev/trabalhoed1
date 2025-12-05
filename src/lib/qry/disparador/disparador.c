@@ -69,8 +69,10 @@ int pressionaBotao(Disparador disparador, char lado)
     DisparadorInternal *d = (DisparadorInternal *)disparador;
     if (!d)
         return 0;
-    Pilha origem = (lado == 'e') ? d->carregadorEsq : d->carregadorDir;
-    Pilha oposto = (lado == 'e') ? d->carregadorDir : d->carregadorEsq;
+    // Lógica invertida: botão esquerdo ('e') tira do carregador DIREITO
+    // e a forma deslocada vai para o carregador ESQUERDO
+    Pilha origem = (lado == 'e') ? d->carregadorDir : d->carregadorEsq;
+    Pilha oposto = (lado == 'e') ? d->carregadorEsq : d->carregadorDir;
     if (!origem)
         return 0;
     if (d->posicaoDisparo && oposto)

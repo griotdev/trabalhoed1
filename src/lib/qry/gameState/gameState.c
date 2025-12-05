@@ -41,11 +41,14 @@ void destroiGameState(GameState gameState)
     if (!state)
         return;
 
+    // Arena agora contém FormaArena wrappers
     while (!filaVazia(state->arena))
     {
-        void *forma = desenfileira(state->arena);
-        if (forma && state->chao)
-            enfileira(state->chao, forma);
+        void *item = desenfileira(state->arena);
+        // Pode ser NULL, FormaArena ou Forma (transição)
+        // Tentamos ambos para compatibilidade
+        if (item && state->chao)
+            enfileira(state->chao, item);
     }
     destroiFila(state->arena, NULL);
 

@@ -63,7 +63,7 @@ static const char *nomeBase(const char *path)
     return b;
 }
 
-static void processarLinha(const char *linha, GameState *state, FILE *saida)
+static void processarLinha(const char *linha, GameState *state, FILE *saida, const char *svgPath)
 {
     char cmd[10];
     if (sscanf(linha, "%9s", cmd) != 1)
@@ -112,7 +112,7 @@ static void processarLinha(const char *linha, GameState *state, FILE *saida)
     }
     else if (strcmp(cmd, "calc") == 0)
     {
-        comando_calc(state, saida);
+        comando_calc(state, saida, svgPath);
     }
 }
 
@@ -172,6 +172,7 @@ GameState parseQry(Args args, Fila fila, Pilha pilha)
     snprintf(combinado, sizeof(combinado), "%s-%s", geoBase, qryBase);
 
     char *pathTxt = construirCaminhoSaida(getOutputDir(args), combinado, ".txt");
+    char *pathSvg = construirCaminhoSaida(getOutputDir(args), combinado, ".svg");
     FILE *out = pathTxt ? fopen(pathTxt, "w") : NULL;
     if (out)
     {
@@ -186,7 +187,7 @@ GameState parseQry(Args args, Fila fila, Pilha pilha)
             linha[len - 1] = '\0';
         if (linha[0] == '\0' || linha[0] == '#')
             continue;
-        processarLinha(linha, &state, out);
+        processarLinha(linha, &state, out, pathSvg);
     }
     if (out)
     {
@@ -195,6 +196,8 @@ GameState parseQry(Args args, Fila fila, Pilha pilha)
     }
     if (pathTxt)
         free(pathTxt);
+    if (pathSvg)
+        free(pathSvg);
     fclose(arq);
     printf("Processamento de consultas concluído.\n");
     return state;

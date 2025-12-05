@@ -41,6 +41,7 @@ QRY_SRC = $(QRY_DIR)/parserQry/parserQry.c \
 		  $(QRY_DIR)/gameState/gameState.c \
 		  $(QRY_DIR)/gameCommands/gameCommands.c \
 		  $(QRY_DIR)/formaUtils/formaUtils.c \
+		  $(QRY_DIR)/formaUtils/formaArena.c \
 		  $(QRY_DIR)/formaUtils/colorRules.c \
 		  $(QRY_DIR)/disparador/disparador.c \
 		  $(QRY_DIR)/carregadorManager/carregadorManager.c
@@ -53,7 +54,7 @@ OBJECTS = $(OBJ_DIR)/main.o \
           $(OBJ_DIR)/circulo.o $(OBJ_DIR)/retangulo.o $(OBJ_DIR)/linha.o $(OBJ_DIR)/texto.o $(OBJ_DIR)/formas.o \
           $(OBJ_DIR)/fila.o $(OBJ_DIR)/pilha.o \
           $(OBJ_DIR)/parserGeo.o $(OBJ_DIR)/svg.o \
-          $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/gameState.o $(OBJ_DIR)/gameCommands.o $(OBJ_DIR)/formaUtils.o $(OBJ_DIR)/colorRules.o $(OBJ_DIR)/disparador.o $(OBJ_DIR)/carregadorManager.o \
+          $(OBJ_DIR)/parserQry.o $(OBJ_DIR)/gameState.o $(OBJ_DIR)/gameCommands.o $(OBJ_DIR)/formaUtils.o $(OBJ_DIR)/formaArena.o $(OBJ_DIR)/colorRules.o $(OBJ_DIR)/disparador.o $(OBJ_DIR)/carregadorManager.o \
 		  $(OBJ_DIR)/argumentHandler.o $(OBJ_DIR)/colisao.o \
 		  $(OBJ_DIR)/svgQry.o $(OBJ_DIR)/saidaQry.o
 
@@ -109,6 +110,9 @@ $(OBJ_DIR)/gameCommands.o: $(QRY_DIR)/gameCommands/gameCommands.c $(QRY_DIR)/gam
 
 $(OBJ_DIR)/formaUtils.o: $(QRY_DIR)/formaUtils/formaUtils.c $(QRY_DIR)/formaUtils/formaUtils.h
 	$(CC) $(CFLAGS) -c $(QRY_DIR)/formaUtils/formaUtils.c -o $(OBJ_DIR)/formaUtils.o
+
+$(OBJ_DIR)/formaArena.o: $(QRY_DIR)/formaUtils/formaArena.c $(QRY_DIR)/formaUtils/formaArena.h
+	$(CC) $(CFLAGS) -c $(QRY_DIR)/formaUtils/formaArena.c -o $(OBJ_DIR)/formaArena.o
 
 $(OBJ_DIR)/colorRules.o: $(QRY_DIR)/formaUtils/colorRules.c $(QRY_DIR)/formaUtils/colorRules.h
 	$(CC) $(CFLAGS) -c $(QRY_DIR)/formaUtils/colorRules.c -o $(OBJ_DIR)/colorRules.o

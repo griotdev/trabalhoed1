@@ -13,6 +13,81 @@
 
 // Função removida - não precisamos mais desenhar os disparadores
 
+static void desenhaAnotacaoTrajetoria(FILE *arq, Forma *f, double disparadorX, double disparadorY)
+{
+    if (!f)
+        return;
+    
+    // Obt\u00e9m posi\u00e7\u00e3o da forma
+    TipoForma tipo = getFormaTipo(f);
+    double formaX = 0.0, formaY = 0.0;
+    
+    switch (tipo)
+    {
+    case TIPO_CIRCULO:
+    {
+        Circulo c = (Circulo)getFormaDados(f);
+        formaX = getCirculoX(c);
+        formaY = getCirculoY(c);
+        break;
+    }
+    case TIPO_RETANGULO:
+    {
+        Retangulo r = (Retangulo)getFormaDados(f);
+        formaX = getRetanguloX(r);
+        formaY = getRetanguloY(r);
+        break;
+    }
+    case TIPO_LINHA:
+    {
+        Linha l = (Linha)getFormaDados(f);
+        formaX = getLinhaX1(l);
+        formaY = getLinhaY1(l);
+        break;
+    }
+    case TIPO_TEXTO:
+    {
+        Texto t = (Texto)getFormaDados(f);
+        formaX = getTextoX(t);
+        formaY = getTextoY(t);
+        break;
+    }
+    default:
+        return;
+    }
+    
+    // Calcula deslocamentos
+    double dx = formaX - disparadorX;
+    double dy = formaY - disparadorY;
+    double midHx = disparadorX + dx * 0.5;
+    double midHy = disparadorY;
+    double midVx = formaX;
+    double midVy = disparadorY + dy * 0.5;
+    
+    // Linha tracejada vermelha do disparador \u00e0 posi\u00e7\u00e3o final
+    fprintf(arq, "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"red\" stroke-dasharray=\"4,2\" stroke-width=\"1\"/>\n",
+            disparadorX, disparadorY, formaX, formaY);
+    
+    // C\u00edrculo marcador vermelho na posi\u00e7\u00e3o final
+    fprintf(arq, "  <circle cx=\"%.2f\" cy=\"%.2f\" r=\"3\" fill=\"none\" stroke=\"red\" stroke-width=\"1\"/>\n",
+            formaX, formaY);
+    
+    // Guia horizontal (linha roxa tracejada)
+    fprintf(arq, "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"purple\" stroke-dasharray=\"2,2\" stroke-width=\"0.8\"/>\n",
+            disparadorX, disparadorY, formaX, disparadorY);
+    
+    // Guia vertical (linha roxa tracejada)
+    fprintf(arq, "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\" stroke=\"purple\" stroke-dasharray=\"2,2\" stroke-width=\"0.8\"/>\n",
+            formaX, disparadorY, formaX, formaY);
+    
+    // Label dx acima da guia horizontal
+    fprintf(arq, "  <text x=\"%.2f\" y=\"%.2f\" fill=\"purple\" font-size=\"12\" text-anchor=\"middle\">dx=%.1f</text>\n",
+            midHx, midHy - 5.0, dx);
+    
+    // Label dy rotacionado pr\u00f3ximo \u00e0 guia vertical
+    fprintf(arq, "  <text x=\"%.2f\" y=\"%.2f\" fill=\"purple\" font-size=\"12\" text-anchor=\"middle\" transform=\"rotate(-90 %.2f %.2f)\">dy=%.1f</text>\n",
+            midVx + 10.0, midVy, midVx + 10.0, midVy, dy);
+}
 
 static void atualizaBBoxForma(Forma *f, double *minX, double *minY, double *maxX, double *maxY)
 {
@@ -145,6 +220,15 @@ static void calculaBBoxState(GameState state, double *outMinX, double *outMinY, 
                     tem = 1;
                 }
                 // Considera tamb\u00e9m a posi\u00e7\u00e3o do disparador se anotada
+                if (getFormaArenaAnotada(fa))
+                {
+                    double dx = getFormaArenaDisparadorX(fa);
+                    double dy = getFormaArenaDisparadorY(fa);
+                    if (dx < minX) minX = dx;
+                    if (dx > maxX) maxX = dx;
+                    if (dy < minY) minY = dy;
+                    if (dy > maxY) maxY = dy;
+                }
                 enfileira(tmp, item);
             }
         }
@@ -231,8 +315,8 @@ int svgGeraArquivoQry(const char *nomeArquivo, GameState state, int largura, int
     {
         fprintf(arq, "  <g transform=\"translate(%.2f, %.2f)\">\n", tx, ty);
     }
+    desenhaDisparadores(arq, state);
     fprintf(arq, "  <!-- Formas na arena -->\n");
-    fprintf(arq, "  <g opacity=\"0.6\">\n");
     Fila arena = getArena(state);
     if (arena && !filaVazia(arena))
     {
@@ -252,6 +336,13 @@ int svgGeraArquivoQry(const char *nomeArquivo, GameState state, int largura, int
                     // Desenha a forma
                     svgEscreveForma(arq, f);
                     
+                    // Desenha anota\u00e7\u00f5es se marcada
+                    if (getFormaArenaAnotada(fa))
+                    {
+                        desenhaAnotacaoTrajetoria(arq, f, 
+                                                 getFormaArenaDisparadorX(fa),
+                                                 getFormaArenaDisparadorY(fa));
+                    }
                 }
                 enfileira(tmp, item);
             }
@@ -263,7 +354,6 @@ int svgGeraArquivoQry(const char *nomeArquivo, GameState state, int largura, int
         }
         destroiFila(tmp, NULL);
     }
-    fprintf(arq, "  </g>\n");
     fprintf(arq, "  <!-- Formas no chão (opacidade reduzida) -->\n");
     Fila chao = getChao(state);
     if (chao && !filaVazia(chao))

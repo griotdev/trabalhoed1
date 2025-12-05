@@ -3,8 +3,10 @@
 #include "gameCommands.h"
 #include "../disparador/disparador.h"
 #include "../formaUtils/formaUtils.h"
+#include "../formaUtils/formaArena.h"
 #include "../formaUtils/colorRules.h"
 #include "../colisao/colisao.h"
+#include "../svgQry/svgQry.h"
 #include "../../formas/formas/formas.h"
 
 void comando_pd(GameState *state, int id, double x, double y, FILE *saida)
@@ -37,6 +39,11 @@ void comando_lc(GameState *state, int idCarregador, int n, FILE *saida)
     }
     int carregadas = 0;
     char info[256];
+    
+    // Usar pilha temporária para inverter a ordem
+    // Assim, a primeira forma retirada do chão será a primeira a sair do carregador
+    Pilha temp = criaPilha();
+    
     for (int i = 0; i < n; i++)
     {
         if (filaVazia(chao))
@@ -46,12 +53,20 @@ void comando_lc(GameState *state, int idCarregador, int n, FILE *saida)
             break;
         }
         Forma *f = (Forma *)desenfileira(chao);
-        empilha(carregador, f);
+        empilha(temp, f);
         carregadas++;
         getFormaInfo(f, info, sizeof(info));
         if (saida)
             fprintf(saida, "    %s carregada\n", info);
     }
+    
+    // Desempilha da temp e empilha no carregador (invertendo a ordem)
+    while (!pilhaVazia(temp))
+    {
+        empilha(carregador, desempilha(temp));
+    }
+    destroiPilha(temp, NULL);
+    
     if (saida && carregadas == n)
         fprintf(saida, "    %d formas carregadas com sucesso no carregador %d\n", n, idCarregador);
 }
@@ -125,6 +140,10 @@ void comando_dsp(GameState *state, int idDisp, double dx, double dy, char tipo, 
             fprintf(saida, "    ERRO: Disparador %d não existe\n", idDisp);
         return;
     }
+    // Guarda posição do disparador antes de disparar
+    double dispX = getDisparadorX(d);
+    double dispY = getDisparadorY(d);
+    
     Forma *f = disparaForma(d, dx, dy);
     if (!f)
     {
@@ -142,7 +161,10 @@ void comando_dsp(GameState *state, int idDisp, double dx, double dy, char tipo, 
         else
             fprintf(saida, "    %s disparada (visível)\n", info);
     }
-    enfileira(arena, f);
+    // Cria FormaArena com anotação se tipo == 'v'
+    bool anotada = (tipo == 'v' || tipo == 'V');
+    FormaArena fa = criaFormaArena(f, dispX, dispY, anotada);
+    enfileira(arena, fa);
 }
 
 void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, double ix, double iy, FILE *saida)
@@ -156,6 +178,10 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
             fprintf(saida, "    ERRO: Disparador %d não existe\n", idDisp);
         return;
     }
+    // Guarda posição do disparador
+    double dispX = getDisparadorX(d);
+    double dispY = getDisparadorY(d);
+    
     Fila arena = getArena(*state);
     int num = 0;
     double cdx = dx, cdy = dy;
@@ -171,7 +197,9 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
         Forma *f = disparaForma(d, cdx, cdy);
         if (!f)
             break;
-        enfileira(arena, f);
+        // Rajadas sempre são anotadas para visualização
+        FormaArena fa = criaFormaArena(f, dispX, dispY, true);
+        enfileira(arena, fa);
         num++;
         cdx += ix;
         cdy += iy;
@@ -180,7 +208,7 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
         fprintf(saida, "    Rajada de %d disparos executada\n", num);
 }
 
-void comando_calc(GameState *state, FILE *saida)
+void comando_calc(GameState *state, FILE *saida, const char *svgPath)
 {
     if (saida)
         fprintf(saida, "[*] calc\n");
@@ -192,10 +220,27 @@ void comando_calc(GameState *state, FILE *saida)
             fprintf(saida, "    Arena vazia - sem colisões\n");
         return;
     }
+    
+    // Gerar SVG ANTES de processar colisões (para mostrar rajadas)
+    if (svgPath != NULL)
+    {
+        if (saida)
+            fprintf(saida, "    Gerando SVG com anotações de rajada: %s\n", svgPath);
+        svgGeraArquivoQry(svgPath, *state, 800, 600);
+    }
     int num = 0;
     Forma *arr[1000];
+    // Extrai as formas dos FormaArena wrappers
     while (!filaVazia(arena))
-        arr[num++] = (Forma *)desenfileira(arena);
+    {
+        FormaArena fa = (FormaArena)desenfileira(arena);
+        if (fa)
+        {
+            arr[num++] = getFormaArenaForma(fa);
+            // Libera o wrapper (mas não a forma)
+            destroiFormaArena(fa);
+        }
+    }
     if (saida)
         fprintf(saida, "    Processando %d formas na arena\n", num);
     int col = 0, esmag = 0, clones = 0;

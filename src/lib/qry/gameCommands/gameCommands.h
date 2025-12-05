@@ -81,7 +81,8 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
  * (cor complementar se a fonte for texto ou linha) e são clonadas de volta ao chão.
  * @param state Ponteiro para o estado do jogo
  * @param saida Arquivo para log (pode ser NULL)
+ * @param svgPath Caminho para gerar o SVG (pode ser NULL para não gerar)
  */
-void comando_calc(GameState *state, FILE *saida);
+void comando_calc(GameState *state, FILE *saida, const char *svgPath);
 
 #endif
