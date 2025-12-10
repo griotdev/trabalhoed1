@@ -1,8 +1,11 @@
-testes/
+
 trabalhoED1-bochaGeometrica.txt
 .agent/
 READMEexemplo.md
 saida*/
+srcAsh/
+srcPietro/
+
 
 # Ignorar binários compilados
 src/obj/

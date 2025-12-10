@@ -60,7 +60,7 @@ void comando_shft(GameState *state, int idDisp, char lado, int n, FILE *saida);
  * @param tipo Tipo de botão ('e' = esquerdo, 'd' = direito)
  * @param saida Arquivo para log (pode ser NULL)
  */
-void comando_dsp(GameState *state, int idDisp, double dx, double dy, char tipo, FILE *saida);
+void comando_dsp(GameState *state, int idDisp, char lado, double dx, double dy, char tipo, FILE *saida);
 
 /**
  * Comando rjd: rejeita uma forma de um carregador, devolvendo ao chão.

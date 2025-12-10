@@ -68,6 +68,29 @@ static int retLinha(Retangulo r, Linha l)
     return 0;
 }
 
+static int circPonto(Circulo c, double px, double py)
+{
+    return dist(getCirculoX(c), getCirculoY(c), px, py) < getCirculoRaio(c);
+}
+
+static int retPonto(Retangulo r, double px, double py)
+{
+    double rx = getRetanguloX(r), ry = getRetanguloY(r), rw = getRetanguloLargura(r), rh = getRetanguloAltura(r);
+    return (px >= rx && px <= rx + rw && py >= ry && py <= ry + rh);
+}
+
+static int linhaPonto(Linha l, double px, double py)
+{
+    (void)l;
+    (void)px;
+    (void)py;
+    // Verificar se ponto está na linha (com margem de erro ou exatamente?)
+    // Para simplificar: apenas extremidades? Ou colinearidade?
+    // Linha tem espessura 0 geometricamente. Difícil colidir com ponto.
+    // Vamos assumir colisão se distância do ponto à linha < epsilon?
+    return 0; // Por enquanto, Texto vs Linha = false (muito difícil acertar exato)
+}
+
 int verificaSobreposicao(Forma *f1, Forma *f2)
 {
     if (!f1 || !f2)
@@ -90,6 +113,29 @@ int verificaSobreposicao(Forma *f1, Forma *f2)
         return retLinha((Retangulo)d1, (Linha)d2);
     if (t1 == TIPO_LINHA && t2 == TIPO_RETANGULO)
         return retLinha((Retangulo)d2, (Linha)d1);
+
+    // Colisões com TEXTO (tratado como Ponto na âncora)
+    if (t1 == TIPO_TEXTO)
+    {
+        double tx = getTextoX((Texto)d1);
+        double ty = getTextoY((Texto)d1);
+        
+        if (t2 == TIPO_CIRCULO) return circPonto((Circulo)d2, tx, ty);
+        if (t2 == TIPO_RETANGULO) return retPonto((Retangulo)d2, tx, ty);
+        if (t2 == TIPO_LINHA) return linhaPonto((Linha)d2, tx, ty);
+        if (t2 == TIPO_TEXTO) return (dist(tx, ty, getTextoX((Texto)d2), getTextoY((Texto)d2)) < 1.0); // Mesmo ponto
+    }
+    
+    if (t2 == TIPO_TEXTO)
+    {
+        double tx = getTextoX((Texto)d2);
+        double ty = getTextoY((Texto)d2);
+        
+        if (t1 == TIPO_CIRCULO) return circPonto((Circulo)d1, tx, ty);
+        if (t1 == TIPO_RETANGULO) return retPonto((Retangulo)d1, tx, ty);
+        if (t1 == TIPO_LINHA) return linhaPonto((Linha)d1, tx, ty);
+    }
+
     return 0;
 }
 

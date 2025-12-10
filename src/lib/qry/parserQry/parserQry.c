@@ -110,10 +110,35 @@ static void processarLinha(const char *linha, GameState *state, FILE *saida, con
     {
         int d;
         double dx, dy;
-        char t;
+        char lado;
+        char t = ' '; // Default empty type
+        
+
+        
+        // Estratégia: Tentar ler como double primeiro (sem lado)
+        // Tentativa 1: dsp <d> <dx> <dy> [t] -> 4 argumentos
         if (sscanf(linha, "dsp %d %lf %lf %c", &d, &dx, &dy, &t) == 4)
         {
-            comando_dsp(state, d, dx, dy, t, saida);
+            // Lado padrão ou ignorado? Assumindo irrelevante se carregado
+            comando_dsp(state, d, '-', dx, dy, t, saida); // '-' as "no side"
+            stats->disparos++;
+        }
+        // Tentativa 2: dsp <d> <dx> <dy> -> 3 argumentos
+        else if (sscanf(linha, "dsp %d %lf %lf", &d, &dx, &dy) == 3)
+        {
+            comando_dsp(state, d, '-', dx, dy, ' ', saida);
+            stats->disparos++;
+        }
+        // Tentativa 3: dsp <d> <lado> <dx> <dy> [t] -> 5 argumentos
+        else if (sscanf(linha, "dsp %d %c %lf %lf %c", &d, &lado, &dx, &dy, &t) == 5)
+        {
+            comando_dsp(state, d, lado, dx, dy, t, saida);
+            stats->disparos++;
+        }
+        // Tentativa 4: dsp <d> <lado> <dx> <dy> -> 4 argumentos
+        else if (sscanf(linha, "dsp %d %c %lf %lf", &d, &lado, &dx, &dy) == 4)
+        {
+            comando_dsp(state, d, lado, dx, dy, ' ', saida);
             stats->disparos++;
         }
     }

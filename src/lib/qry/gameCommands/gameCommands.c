@@ -120,10 +120,10 @@ void comando_shft(GameState *state, int idDisp, char lado, int n, FILE *saida)
         fprintf(saida, "    Botão '%c' pressionado %d vezes no disparador %d\n", lado, n, idDisp);
 }
 
-void comando_dsp(GameState *state, int idDisp, double dx, double dy, char tipo, FILE *saida)
+void comando_dsp(GameState *state, int idDisp, char lado, double dx, double dy, char tipo, FILE *saida)
 {
     if (saida)
-        fprintf(saida, "[*] dsp %d %.1f %.1f %c\n", idDisp, dx, dy, tipo);
+        fprintf(saida, "[*] dsp %d %c %.1f %.1f %c\n", idDisp, lado, dx, dy, tipo);
     Disparador d = obtemDisparador(*state, idDisp);
     if (!d)
     {
@@ -131,6 +131,7 @@ void comando_dsp(GameState *state, int idDisp, double dx, double dy, char tipo, 
             fprintf(saida, "    ERRO: Disparador %d não existe\n", idDisp);
         return;
     }
+    
     // Guarda posição do disparador antes de disparar
     double dispX = getDisparadorX(d);
     double dispY = getDisparadorY(d);
