@@ -1,7 +1,12 @@
 testes/
 trabalhoED1-bochaGeometrica.txt
+.agent/
+READMEexemplo.md
+saida*/
 
-# Ignorar binários compilados (boa prática)
+# Ignorar binários compilados
 src/obj/
 src/ted
 src/ted.exe
+*.o
+*.exe
