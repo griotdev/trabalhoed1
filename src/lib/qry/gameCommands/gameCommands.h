@@ -82,7 +82,11 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
  * @param state Ponteiro para o estado do jogo
  * @param saida Arquivo para log (pode ser NULL)
  * @param svgPath Caminho para gerar o SVG (pode ser NULL para não gerar)
+ * @param esmagadas Ponteiro para acumular formas esmagadas (pode ser NULL)
+ * @param clones Ponteiro para acumular formas clonadas (pode ser NULL)
+ * @param pontuacao Ponteiro para acumular pontuação (pode ser NULL)
  */
-void comando_calc(GameState *state, FILE *saida, const char *svgPath);
+void comando_calc(GameState *state, FILE *saida, const char *svgPath,
+                  int *esmagadas, int *clones, double *pontuacao);
 
 #endif

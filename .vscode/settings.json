@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "circulo.h": "c",
-        "string.h": "c",
-        "gamestate.h": "c",
-        "fila.h": "c"
-    }
-}

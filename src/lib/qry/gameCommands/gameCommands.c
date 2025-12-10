@@ -40,10 +40,8 @@ void comando_lc(GameState *state, int idCarregador, int n, FILE *saida)
     int carregadas = 0;
     char info[256];
     
-    // Usar pilha temporária para inverter a ordem
-    // Assim, a primeira forma retirada do chão será a primeira a sair do carregador
-    Pilha temp = criaPilha();
-    
+    // Carregar formas diretamente na pilha (LIFO)
+    // A última forma carregada será a primeira a ser disparada
     for (int i = 0; i < n; i++)
     {
         if (filaVazia(chao))
@@ -53,19 +51,12 @@ void comando_lc(GameState *state, int idCarregador, int n, FILE *saida)
             break;
         }
         Forma *f = (Forma *)desenfileira(chao);
-        empilha(temp, f);
+        empilha(carregador, f);
         carregadas++;
         getFormaInfo(f, info, sizeof(info));
         if (saida)
             fprintf(saida, "    %s carregada\n", info);
     }
-    
-    // Desempilha da temp e empilha no carregador (invertendo a ordem)
-    while (!pilhaVazia(temp))
-    {
-        empilha(carregador, desempilha(temp));
-    }
-    destroiPilha(temp, NULL);
     
     if (saida && carregadas == n)
         fprintf(saida, "    %d formas carregadas com sucesso no carregador %d\n", n, idCarregador);
@@ -208,120 +199,118 @@ void comando_rjd(GameState *state, int idDisp, char lado, double dx, double dy, 
         fprintf(saida, "    Rajada de %d disparos executada\n", num);
 }
 
-void comando_calc(GameState *state, FILE *saida, const char *svgPath)
+void comando_calc(GameState *state, FILE *saida, const char *svgPath,
+                  int *out_esmagadas, int *out_clones, double *out_pontuacao)
 {
     if (saida)
         fprintf(saida, "[*] calc\n");
     Fila arena = getArena(*state);
     Fila chao = getChao(*state);
-    if (filaVazia(arena))
-    {
-        if (saida)
-            fprintf(saida, "    Arena vazia - sem colisões\n");
-        return;
-    }
     
     // Gerar SVG ANTES de processar colisões (para mostrar rajadas)
     if (svgPath != NULL)
     {
-        if (saida)
-            fprintf(saida, "    Gerando SVG com anotações de rajada: %s\n", svgPath);
         svgGeraArquivoQry(svgPath, *state, 800, 600);
     }
-    int num = 0;
-    Forma *arr[1000];
-    // Extrai as formas dos FormaArena wrappers
-    while (!filaVazia(arena))
+    
+    if (filaVazia(arena))
+    {
+        if (saida)
+            fprintf(saida, "Arena vazia - sem colisões\n");
+        return;
+    }
+    
+    double area_round = 0.0;
+    int verif = 0, esmag = 0, clones = 0;
+    
+    // Processar PARES sequencialmente (FIFO) - não O(n²)!
+    while (!filaVazia(arena) && tamanhoFila(arena) >= 2)
+    {
+        // Extrai par I, J da arena
+        FormaArena faI = (FormaArena)desenfileira(arena);
+        Forma *I = getFormaArenaForma(faI);
+        destroiFormaArena(faI);
+        
+        FormaArena faJ = (FormaArena)desenfileira(arena);
+        Forma *J = getFormaArenaForma(faJ);
+        destroiFormaArena(faJ);
+        
+        verif++;
+        double aI = calculaArea(I);
+        double aJ = calculaArea(J);
+        
+        if (saida)
+            fprintf(saida, "  [verif %d] id=%d (area=%.2f) x id=%d (area=%.2f)\n",
+                    verif, getFormaId(I), aI, getFormaId(J), aJ);
+        
+        if (verificaSobreposicao(I, J))
+        {
+            if (saida)
+                fprintf(saida, "    -> Sobreposicao detectada!\n");
+            
+            if (aI < aJ)
+            {
+                // I esmagada (menor área perde)
+                if (saida)
+                    fprintf(saida, "    -> [I<J] Forma %d ESMAGADA (%.2f < %.2f). J retorna ao chao.\n",
+                            getFormaId(I), aI, aJ);
+                
+                area_round += aI;
+                esmag++;
+                destroiForma(I);
+                enfileira(chao, J);
+            }
+            else
+            {
+                // I >= J: NÃO esmaga! Troca cores, clona I, todos voltam
+                if (saida)
+                    fprintf(saida, "    -> [I>=J] Forma %d modifica %d. Clone de %d criado. Todos retornam.\n",
+                            getFormaId(I), getFormaId(J), getFormaId(I));
+                
+                // J recebe cor de preenchimento de I (ou complementar se I for linha)
+                aplicaCorDeFonte(J, I);
+                
+                // Cria clone de I com cores invertidas
+                Forma *clone = clonaForma(I);
+                if (clone)
+                {
+                    trocaCores(clone);
+                    clones++;
+                }
+                
+                // Todos voltam ao chão: I, J, clone
+                enfileira(chao, I);
+                enfileira(chao, J);
+                if (clone)
+                    enfileira(chao, clone);
+            }
+        }
+        else
+        {
+            // Sem sobreposição: ambos voltam ao chão
+            if (saida)
+                fprintf(saida, "    -> Sem sobreposicao. Ambos retornam ao chao.\n");
+            enfileira(chao, I);
+            enfileira(chao, J);
+        }
+    }
+    
+    // Se sobrou forma ímpar (sem par), volta ao chão
+    if (!filaVazia(arena))
     {
         FormaArena fa = (FormaArena)desenfileira(arena);
-        if (fa)
-        {
-            arr[num++] = getFormaArenaForma(fa);
-            // Libera o wrapper (mas não a forma)
-            destroiFormaArena(fa);
-        }
+        Forma *sobra = getFormaArenaForma(fa);
+        destroiFormaArena(fa);
+        if (saida)
+            fprintf(saida, "  [impar] Forma %d sem par, retorna ao chao.\n", getFormaId(sobra));
+        enfileira(chao, sobra);
     }
+    
     if (saida)
-        fprintf(saida, "    Processando %d formas na arena\n", num);
-    int col = 0, esmag = 0, clones = 0;
-    for (int i = 0; i < num; i++)
-        if (arr[i])
-            for (int j = i + 1; j < num; j++)
-                if (arr[j])
-                    if (verificaSobreposicao(arr[i], arr[j]))
-                    {
-                        col++;
-                        double ai = calculaArea(arr[i]);
-                        double aj = calculaArea(arr[j]);
-                        if (saida)
-                            fprintf(saida, "    Colisão %d detectada (áreas: %.2f vs %.2f)\n", col, ai, aj);
-                        if (ai < aj)
-                        {
-                            if (saida)
-                                fprintf(saida, "      Forma I esmagada (menor área)\n");
-                            // Ajusta cor do sobrevivente J com base em I (aplica complementar se I for texto/linha)
-                            aplicaCorDeFonte(arr[j], arr[i]);
-                            // Agora destrói I
-                            destroiForma(arr[i]);
-                            arr[i] = NULL;
-                            esmag++;
-                            // Mantém o swap das cores do sobrevivente
-                            trocaCores(arr[j]);
-                            if (saida)
-                                fprintf(saida, "      Forma J: cores trocadas (e ajustadas por regra)\n");
-                            Forma *c = clonaForma(arr[j]);
-                            if (c)
-                            {
-                                enfileira(chao, c);
-                                clones++;
-                                if (saida)
-                                    fprintf(saida, "      Clone de J criado e adicionado ao chão\n");
-                            }
-                        }
-                        else if (aj < ai)
-                        {
-                            if (saida)
-                                fprintf(saida, "      Forma J esmagada (menor área)\n");
-                            // Ajusta cor do sobrevivente I com base em J (aplica complementar se J for texto/linha)
-                            aplicaCorDeFonte(arr[i], arr[j]);
-                            // Agora destrói J
-                            destroiForma(arr[j]);
-                            arr[j] = NULL;
-                            esmag++;
-                            // Mantém o swap das cores do sobrevivente
-                            trocaCores(arr[i]);
-                            if (saida)
-                                fprintf(saida, "      Forma I: cores trocadas (e ajustadas por regra)\n");
-                            Forma *c = clonaForma(arr[i]);
-                            if (c)
-                            {
-                                enfileira(chao, c);
-                                clones++;
-                                if (saida)
-                                    fprintf(saida, "      Clone de I criado e adicionado ao chão\n");
-                            }
-                        }
-                        else
-                        {
-                            if (saida)
-                                fprintf(saida, "      Áreas iguais - ambas esmagadas\n");
-                            destroiForma(arr[i]);
-                            destroiForma(arr[j]);
-                            arr[i] = arr[j] = NULL;
-                            esmag += 2;
-                        }
-                    }
-    int sob = 0;
-    for (int i = 0; i < num; i++)
-        if (arr[i])
-        {
-            enfileira(chao, arr[i]);
-            sob++;
-        }
-    if (saida)
-    {
-        fprintf(saida, "    Resultado: %d colisões detectadas\n", col);
-        fprintf(saida, "    %d formas esmagadas, %d clones criados\n", esmag, clones);
-        fprintf(saida, "    %d formas sobreviventes retornaram ao chão\n", sob);
-    }
+        fprintf(saida, "  Pontos do round: %.2f\n", area_round);
+    
+    // Atualizar estatísticas de saída
+    if (out_esmagadas) *out_esmagadas += esmag;
+    if (out_clones) *out_clones += clones;
+    if (out_pontuacao) *out_pontuacao += area_round;
 }

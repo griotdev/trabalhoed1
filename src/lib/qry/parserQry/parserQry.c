@@ -9,6 +9,15 @@
 
 #define MAX_LINE 1024
 
+/* Estrutura para acumular estatísticas durante processamento */
+typedef struct {
+    int instrucoes;
+    int disparos;
+    int esmagadas;
+    int clones;
+    double pontuacao;
+} Estatisticas;
+
 static char *construirCaminhoQry(const char *dir, const char *arquivo)
 {
     if (!arquivo)
@@ -63,11 +72,14 @@ static const char *nomeBase(const char *path)
     return b;
 }
 
-static void processarLinha(const char *linha, GameState *state, FILE *saida, const char *svgPath)
+static void processarLinha(const char *linha, GameState *state, FILE *saida, const char *svgPath, Estatisticas *stats)
 {
     char cmd[10];
     if (sscanf(linha, "%9s", cmd) != 1)
         return;
+    
+    stats->instrucoes++;
+    
     if (strcmp(cmd, "pd") == 0)
     {
         int id;
@@ -100,7 +112,10 @@ static void processarLinha(const char *linha, GameState *state, FILE *saida, con
         double dx, dy;
         char t;
         if (sscanf(linha, "dsp %d %lf %lf %c", &d, &dx, &dy, &t) == 4)
+        {
             comando_dsp(state, d, dx, dy, t, saida);
+            stats->disparos++;
+        }
     }
     else if (strcmp(cmd, "rjd") == 0)
     {
@@ -108,11 +123,19 @@ static void processarLinha(const char *linha, GameState *state, FILE *saida, con
         char lado;
         double dx, dy, ix, iy;
         if (sscanf(linha, "rjd %d %c %lf %lf %lf %lf", &d, &lado, &dx, &dy, &ix, &iy) == 6)
+        {
+            // rjd dispara múltiplas formas - precisamos contar depois
+            // Por enquanto, marcamos para contagem posterior
+            Fila arena = getArena(*state);
+            int antes = tamanhoFila(arena);
             comando_rjd(state, d, lado, dx, dy, ix, iy, saida);
+            int depois = tamanhoFila(arena);
+            stats->disparos += (depois - antes);
+        }
     }
     else if (strcmp(cmd, "calc") == 0)
     {
-        comando_calc(state, saida, svgPath);
+        comando_calc(state, saida, svgPath, &stats->esmagadas, &stats->clones, &stats->pontuacao);
     }
 }
 
@@ -174,11 +197,12 @@ GameState parseQry(Args args, Fila fila, Pilha pilha)
     char *pathTxt = construirCaminhoSaida(getOutputDir(args), combinado, ".txt");
     char *pathSvg = construirCaminhoSaida(getOutputDir(args), combinado, ".svg");
     FILE *out = pathTxt ? fopen(pathTxt, "w") : NULL;
-    if (out)
-    {
-        fprintf(out, "# Resultado da execução do arquivo .qry\n\n");
-    }
+
     GameState state = criaGameState(fila);
+    
+    // Inicializar estatísticas
+    Estatisticas stats = {0, 0, 0, 0, 0.0};
+    
     char linha[MAX_LINE];
     while (fgets(linha, sizeof(linha), arq))
     {
@@ -187,13 +211,32 @@ GameState parseQry(Args args, Fila fila, Pilha pilha)
             linha[len - 1] = '\0';
         if (linha[0] == '\0' || linha[0] == '#')
             continue;
-        processarLinha(linha, &state, out, pathSvg);
+        processarLinha(linha, &state, out, pathSvg, &stats);
     }
+    
+    // Imprimir relatório final
     if (out)
     {
-        fprintf(out, "\n# Execução concluída\n");
+        fprintf(out, "\n========================================\n");
+        fprintf(out, "          RESUMO DA EXECUCAO\n");
+        fprintf(out, "========================================\n");
+        fprintf(out, "  Pontuacao acumulada: %.2f\n", stats.pontuacao);
+        fprintf(out, "  Comandos executados: %d\n", stats.instrucoes);
+        fprintf(out, "  Disparos realizados: %d\n", stats.disparos);
+        fprintf(out, "  Formas destruidas:   %d\n", stats.esmagadas);
+        fprintf(out, "  Clones gerados:      %d\n", stats.clones);
+        fprintf(out, "========================================\n");
         fclose(out);
     }
+    
+    // Também exibir no console
+    printf("\n=== RELATÓRIO FINAL ===\n");
+    printf("Pontuação total: %lf\n", stats.pontuacao);
+    printf("Instruções realizadas: %d\n", stats.instrucoes);
+    printf("Total de disparos: %d\n", stats.disparos);
+    printf("Formas esmagadas: %d\n", stats.esmagadas);
+    printf("Formas clonadas: %d\n\n", stats.clones);
+    
     if (pathTxt)
         free(pathTxt);
     if (pathSvg)
