@@ -1,46 +1,7 @@
-# =============================================================================
-# .gitignore - Projeto Estrutura de Dados
-# =============================================================================
+testes/
+trabalhoED1-bochaGeometrica.txt
 
-# Ignorar TUDO por padrão
-*
-
-# Exceto src/ e README.md
-!src/
-!src/**
-!README.md
-!.gitignore
-
-# Dentro de src, ignorar arquivos de compilação
+# Ignorar binários compilados (boa prática)
 src/obj/
 src/ted
 src/ted.exe
-src/*.o
-
-# Ignorar pastas de saída e testes
-saida*/
-testes/
-srcAsh/
-srcPietro/
-
-# Ignorar arquivos de texto gerados pelo corretor
-saida-*.txt
-*.log
-
-# Ignorar arquivos de backup e temporários
-*~
-*.swp
-*.bak
-*.tmp
-
-# Ignorar arquivos do sistema
-.DS_Store
-Thumbs.db
-
-# Ignorar arquivos de IDE
-.vscode/
-.idea/
-*.code-workspace
-
-# Ignorar arquivos de agente
-.agent/

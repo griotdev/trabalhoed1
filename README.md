@@ -1,299 +1,169 @@
-# 🎯 Bocha Geométrica - Projeto ED1
+# Trabalho 1 - Jogo de Esmagamento Geométrico
 
-## 🧠 Identificação
+**Estrutura de Dados - C99**
 
+## Informações do Aluno
 
-- **Matrícula:** 202500560216
-- **Nome do aluno:** André Ichihashi Rodrigues
-- **Projeto:** Bocha Geométrica
-- **Disciplina:** Estrutura de Dados I
-- **Universidade:** UEL (Universidade Estadual de Londrina)
-- **Professor:** Evandro Baccarin
-- **Período:** 2025/1
+| Campo     | Valor                      |
+|-----------|----------------------------|
+| Matrícula | 202500560216               |
+| Nome      | André Ichihashi Rodrigues  |
 
 ---
 
-## 📋 Descrição do Projeto
+## Descrição
 
-Sistema para manipulação e visualização de formas geométricas com suporte a:
-- Leitura de arquivos `.geo` (geometrias)
-- Processamento de comandos `.qry` (consultas/operações)
-- Geração de arquivos SVG para visualização
-- Simulação de colisões e esmagamentos entre formas
-- Uso exclusivo de **pilhas** e **filas** como estruturas de dados
+Este programa implementa um **Jogo de Esmagamento Geométrico** onde formas são disparadas em uma arena e colidem entre si. O sistema lê arquivos de definição geométrica (`.geo`) e arquivos de comandos (`.qry`), gerando saídas visuais em SVG e relatórios em TXT.
+
+### Funcionalidades
+
+- **Formas Geométricas**: Suporte a círculos, retângulos, linhas e textos.
+- **Carregadores e Disparadores**: Sistema de pilhas para carregar e disparar formas.
+- **Colisões**: Detecção de sobreposição e esmagamento baseado em área.
+- **Clonagem**: Formas maiores clonam-se ao colidir com menores.
 
 ---
 
-## ⚙️ Compilação
+## Compilação
 
-O projeto utiliza **Makefile** para automatizar a compilação. O Makefile está localizado em `src/` e gera o executável `ted` dentro da pasta `src/`.
+### Pré-requisitos
 
-### Comandos de compilação:
+- GCC com suporte a C99
+- Make
+
+### Comandos
 
 ```bash
-# Entrar no diretório src
 cd src
-
-# Limpar arquivos de compilação anteriores
-make clean
-
-# Compilar o projeto
-make all
-
-# Ou simplesmente
-make
+make        # Compila o projeto
+make clean  # Remove arquivos objeto e executável
 ```
 
-### Alvos disponíveis no Makefile:
-
-- `make all` ou `make`: Compila o projeto e gera o executável `ted`
-- `make clean`: Remove arquivos objeto e o executável
-- `make distclean`: Remove também os arquivos de saída
-- `make run GEO=<arquivo.geo> QRY=<arquivo.qry>`: Compila e executa com parâmetros
-- `make valgrind GEO=<arquivo.geo> QRY=<arquivo.qry>`: Executa com valgrind para verificar vazamentos
-
-### Flags de compilação:
-
-- `-std=c99`: Padrão C99
-- `-fstack-protector-all`: Proteção de pilha
-- `-Wall -Wextra`: Warnings habilitados
-- `-Werror=implicit-function-declaration`: Erro em funções implícitas
-- `-lm`: Biblioteca matemática
+O executável gerado será `ted` dentro da pasta `src/`.
 
 ---
 
-## ▶️ Execução
+## Execução
 
-O programa `ted` deve ser executado a partir do diretório `src/`:
-
-### Sintaxe:
+### Sintaxe
 
 ```bash
-./ted -e <diretório_entrada> -f <arquivo.geo> -o <diretório_saída> [-q <arquivo.qry>]
+./ted -e <dir_entrada> -f <arquivo.geo> -o <dir_saida> [-q <arquivo.qry>]
 ```
 
-### Parâmetros:
+### Argumentos Obrigatórios
 
-- `-e <diretório>`: Diretório onde estão os arquivos de entrada (opcional, padrão: `../testes`)
-- `-f <arquivo.geo>`: Nome do arquivo `.geo` com as geometrias (obrigatório)
-- `-o <diretório>`: Diretório onde os arquivos de saída serão gerados (obrigatório)
-- `-q <arquivo.qry>`: Nome do arquivo `.qry` com comandos (opcional)
+| Flag | Descrição                                      |
+|------|------------------------------------------------|
+| `-e` | Diretório base de entrada (onde estão os arquivos `.geo` e `.qry`) |
+| `-f` | Nome do arquivo de geometria (`.geo`)          |
+| `-o` | Diretório de saída para os arquivos gerados    |
 
-### Exemplos de execução:
+### Argumentos Opcionais
+
+| Flag   | Descrição                           |
+|--------|-------------------------------------|
+| `-q`   | Arquivo de consultas (`.qry`)       |
+
+### Exemplos
 
 ```bash
-# Executar apenas com arquivo .geo (gera SVG base)
-./ted -e ../testes -f figs-alet.geo -o ../saida
+# Apenas gerar SVG das formas (sem consultas)
+./ted -e ../testes -f cenario.geo -o ../saida
 
-# Executar com .geo e .qry (gera SVG base + SVG de consultas + log .txt)
-./ted -e ../testes -f figs-alet.geo -o ../saida -q figs-alet/d2-1x1-norte.qry
-
-# Usando caminhos relativos diferentes
-./ted -f ../testes/retg-cres.geo -o ../saida -q retg-cres/d1-seq-raj.qry
-```
-
-### Arquivos gerados:
-
-1. **<geo>.svg**: Visualização das formas do arquivo `.geo`
-2. **<geo>-<qry>.svg**: Visualização do estado após comandos `.qry`
-3. **<geo>-<qry>.txt**: Log textual da execução dos comandos
-
----
-
-## 📂 Estrutura de Arquivos
-
-```
-trabalhoed1/
-├── README.md                    # Este arquivo
-├── makefile                     # Makefile da raiz (delegação)
-├── src/                         # Código-fonte
-│   ├── makefile                 # Makefile principal (gera ted aqui)
-│   ├── main.c                   # Ponto de entrada do programa
-│   ├── obj/                     # Arquivos objeto (.o)
-│   ├── ted                      # Executável gerado
-│   └── lib/                     # Bibliotecas modulares
-│       ├── argumentos/          # Processamento de argumentos CLI
-│       │   ├── argumentHandler.c
-│       │   └── argumentHandler.h
-│       ├── estruturas/          # Estruturas de dados básicas
-│       │   ├── fila/            # TAD Fila (FIFO)
-│       │   │   ├── fila.c
-│       │   │   └── fila.h
-│       │   └── pilha/           # TAD Pilha (LIFO)
-│       │       ├── pilha.c
-│       │       └── pilha.h
-│       ├── formas/              # TADs de formas geométricas
-│       │   ├── circulo/
-│       │   ├── retangulo/
-│       │   ├── linha/
-│       │   ├── texto/
-│       │   └── formas/          # Interface genérica
-│       ├── geo/                 # Processamento de arquivos .geo
-│       │   ├── parserGeo/       # Parser de .geo
-│       │   └── svg/             # Geração de SVG base
-│       └── qry/                 # Sistema de consultas/comandos
-│           ├── parserQry/       # Parser de .qry
-│           ├── gameState/       # Estado global do jogo
-│           ├── gameCommands/    # Implementação dos comandos
-│           ├── disparador/      # TAD Disparador
-│           ├── carregadorManager/ # Gerenciador de carregadores
-│           ├── colisao/         # Detecção de colisões
-│           ├── formaUtils/      # Utilitários (cores, info)
-│           ├── svgQry/          # Geração de SVG de consultas
-│           └── saida/           # Geração de logs
-├── testes/                      # Arquivos de teste
-│   ├── *.geo                    # Arquivos de geometrias
-│   ├── figs-alet/               # Conjunto de testes
-│   │   └── *.qry
-│   ├── retg-cres/
-│   └── ...
-├── saida/                       # Arquivos gerados
-│   ├── *.svg                    # Visualizações SVG
-│   └── *.txt                    # Logs de execução
-└── ignore/                      # Arquivos auxiliares (não entregues)
+# Executar com arquivo de consultas
+./ted -e ../testes -f cenario.geo -q pasta/consultas.qry -o ../saida
 ```
 
 ---
 
-## 🧮 Funcionalidades Implementadas
+## Estrutura de Arquivos de Entrada
 
-### ✅ Parser de arquivos `.geo`
-- Leitura e interpretação de formas geométricas:
-  - `c`: Círculo (id, x, y, raio, corBorda, corPreenchimento)
-  - `r`: Retângulo (id, x, y, largura, altura, corBorda, corPreenchimento)
-  - `l`: Linha (id, x1, y1, x2, y2, cor)
-  - `t`: Texto (id, x, y, corBorda, corPreenchimento, âncora, texto)
-  - `ts`: Estilo de texto (família, peso, tamanho)
+### Arquivo `.geo` (Geometria)
 
-### ✅ Parser de arquivos `.qry`
-Implementação completa dos 7 comandos:
+Define as formas do cenário inicial:
 
-1. **`pd`** - Posiciona disparador no espaço (x, y)
-2. **`lc`** - Carrega n formas do chão para um carregador
-3. **`atch`** - Anexa carregadores esquerdo e direito a um disparador
-4. **`shft`** - Desloca n formas entre carregadores
-5. **`dsp`** - Dispara forma de um carregador para a arena
-6. **`rjd`** - Rejeita forma de um carregador, devolvendo ao chão
-7. **`calc`** - Calcula colisões e esmaga formas sobrepostas
+```
+c <id> <x> <y> <raio> <cor_borda> <cor_preenchimento>
+r <id> <x> <y> <largura> <altura> <cor_borda> <cor_preenchimento>
+l <id> <x1> <y1> <x2> <y2> <cor>
+t <id> <x> <y> <cor_borda> <cor_preenchimento> <ancora> <texto>
+ts <familia> <peso> <tamanho>
+```
 
-### ✅ Sistema de colisões
-- Detecção de sobreposição entre todas as combinações de formas
-- Cálculo de áreas (incluindo heurísticas para linha e texto)
-- Esmagamento: forma menor é destruída
-- Transferência de cores com regra complementar para texto/linha
+### Arquivo `.qry` (Comandos)
 
-### ✅ Geração de SVG
-- SVG base: todas as formas do `.geo`
-- SVG de consultas: estado após comandos (chão, arena, disparadores)
-- Dimensionamento dinâmico baseado no conteúdo
-- Opacidade diferenciada para formas no chão (0.6)
+Define comandos a serem executados:
 
-### ✅ Saída textual
-- Log detalhado da execução dos comandos
-- Formato: `<geo>-<qry>.txt`
+```
+pd <id> <x> <y>                    # Posiciona disparador
+lc <carreg> <n>                    # Carrega n formas no carregador
+atch <disp> <carreg_esq> <carreg_dir>  # Anexa carregadores
+shft <disp> <lado> <n>             # Shift de formas
+dsp <disp> <lado> <dx> <dy> [v]    # Dispara forma
+rjd <disp> <lado> <dx> <dy> <ix> <iy>  # Rajada de disparos
+calc                               # Calcula colisões
+```
 
 ---
 
-## 🧱 Estrutura de Dados
+## Arquivos de Saída
 
-### Pilhas (LIFO - Last In, First Out)
+| Arquivo                          | Descrição                                    |
+|----------------------------------|----------------------------------------------|
+| `<nome>.svg`                     | SVG inicial com todas as formas              |
+| `<nome>-<qry>.svg`               | SVG final após processamento das consultas   |
+| `<nome>-<qry>.txt`               | Relatório textual das ações realizadas       |
+
+---
+
+## Estrutura do Projeto
+
+```
+src/
+├── main.c                  # Ponto de entrada
+├── makefile                # Script de compilação
+└── lib/
+    ├── argumentos/         # Processamento de CLI
+    ├── estruturas/         # Fila e Pilha
+    ├── formas/             # Círculo, Retângulo, Linha, Texto
+    ├── geo/                # Parser GEO e geração SVG
+    └── qry/                # Parser QRY, comandos e colisões
+        ├── parserQry/      # Parser de comandos
+        ├── gameState/      # Estado do jogo (chão, arena, disparadores)
+        ├── gameCommands/   # Implementação dos comandos
+        ├── disparador/     # TAD Disparador
+        ├── carregadorManager/  # Gerenciador de carregadores
+        ├── colisao/        # Detecção de colisões
+        ├── formaUtils/     # Utilitários e regras de cores
+        ├── svgQry/         # SVG para estado do jogo
+        └── saida/          # Geração de relatórios TXT
+```
+
+---
+
+## Estruturas de Dados
+
+### Pilha (LIFO)
 **Uso:** Carregadores de formas
 
-- Cada carregador é uma pilha que armazena formas
-- Operações: `empilha`, `desempilha`, `consulta`
-- Disparadores anexam duas pilhas (carregadores esquerdo e direito)
-- Comando `shft` transfere formas entre pilhas
+- Formas são empilhadas com `lc` e desempilhadas com `shft`/`dsp`
+- Disparadores anexam duas pilhas (esquerda e direita)
 
-### Filas (FIFO - First In, First Out)
-**Uso:** Chão e arena
+### Fila (FIFO)
+**Uso:** Chão e Arena
 
-- **Chão**: Fila com todas as formas disponíveis do `.geo`
-- **Arena**: Fila com formas disparadas aguardando cálculo de colisões
-- Operações: `enfileira`, `desenfileira`, `consulta`
-- Comando `lc` retira formas do chão
-- Comando `calc` processa formas da arena
-
-### TADs Opacos
-Todos os tipos são opacos (`void*`) para garantir encapsulamento:
-- `Fila`, `Pilha`, `Forma`, `Circulo`, `Retangulo`, `Linha`, `Texto`
-- `GameState`, `Disparador`, `CarregadorManager`
+- **Chão**: Armazena todas as formas disponíveis
+- **Arena**: Armazena formas disparadas para cálculo de colisões
 
 ---
 
-## 🧩 Modularização
+## Regras de Colisão
 
-O projeto está organizado em módulos independentes:
-
-| Módulo | Responsabilidade |
-|--------|------------------|
-| **argumentHandler** | Processamento de argumentos da linha de comando |
-| **fila / pilha** | Estruturas de dados genéricas |
-| **circulo / retangulo / linha / texto** | TADs de formas específicas |
-| **formas** | Interface genérica para todas as formas |
-| **parserGeo** | Leitura e interpretação de arquivos `.geo` |
-| **svg** | Geração de SVG para geometrias base |
-| **parserQry** | Leitura e execução de comandos `.qry` |
-| **gameState** | Gerenciamento do estado global (chão, arena, disparadores) |
-| **gameCommands** | Implementação dos 7 comandos do `.qry` |
-| **disparador** | TAD Disparador com carregadores |
-| **carregadorManager** | Gerenciamento de pilhas de formas |
-| **colisao** | Detecção de sobreposição e cálculo de áreas |
-| **formaUtils** | Utilitários (troca de cores, informações) |
-| **colorRules** | Regras de transferência de cores (complementar) |
-| **svgQry** | Geração de SVG do estado do jogo |
-| **saidaQry** | Geração de logs textuais |
+| Condição | Ação |
+|----------|------|
+| Sem sobreposição | Ambas voltam ao chão |
+| Área(I) < Área(J) | I é esmagada, J volta ao chão |
+| Área(I) ≥ Área(J) | J recebe cor de I, I é clonada, todos voltam |
 
 ---
-
-## 🧪 Testes e Validação
-
-### Verificação de memória (Valgrind)
-
-```bash
-cd src
-make valgrind GEO=figs-alet.geo QRY=figs-alet/d2-1x1-norte.qry
-```
-
-**Resultado esperado:**
-```
-All heap blocks were freed -- no leaks are possible
-ERROR SUMMARY: 0 errors from 0 contexts
-```
-
-### Exemplos de teste incluídos
-
-- `figs-alet.geo` + múltiplos `.qry` (testes de disparo e colisão)
-- `retg-cres.geo` / `retg-cres-2.geo` + `.qry` (testes de retângulos)
-- `retg-decres.geo` + `.qry`
-- `rets-circs-cres.geo` + `.qry` (mistura de formas)
-
----
-
-## 🧾 Observações Finais
-
-### Características do projeto
-
-- ✅ **100% modular**: Cada funcionalidade em seu próprio módulo
-- ✅ **TADs opacos**: Encapsulamento total das estruturas
-- ✅ **Zero vazamentos**: Validado com Valgrind
-- ✅ **Headers documentados**: Todas as funções com comentários explicativos
-- ✅ **Código limpo**: Segue boas práticas de C99
-- ✅ **Nomenclatura padronizada**: Saídas seguem padrão `<geo>-<qry>.svg/txt`
-
-### Decisões de design
-
-1. **Área de linha e texto**: Usamos heurísticas (2×comprimento e 20×caracteres) já que essas formas não têm área real
-2. **Cor complementar**: Quando fonte da cor é texto ou linha, aplicamos RGB complementar (255 - componente)
-3. **SVG dinâmico**: Canvas ajusta automaticamente para conter todo o conteúdo
-4. **Opacidade**: Formas no chão renderizadas com 60% de opacidade para diferenciação visual
-
-### Compilação e execução testadas
-
-- ✅ Ubuntu 22.04 LTS
-- ✅ GCC 11.4.0
-- ✅ Valgrind 3.18.1
-- ✅ Make 4.3
-
----
-
-**Projeto desenvolvido para a disciplina de Estrutura de Dados I - UEL 2025/1**
